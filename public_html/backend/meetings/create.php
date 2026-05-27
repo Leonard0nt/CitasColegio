@@ -82,6 +82,23 @@ try {
         exit;
     }
 
+    $stmtConflict = $pdo->prepare(
+        'SELECT id FROM meetings WHERE teacher_id = :teacher_id AND meeting_date = :meeting_date AND meeting_time = :meeting_time LIMIT 1'
+    );
+    $stmtConflict->execute([
+        ':teacher_id' => $teacherId,
+        ':meeting_date' => $meetingDate,
+        ':meeting_time' => $meetingTime,
+    ]);
+
+    if ($stmtConflict->fetch()) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Ya existe una reunión para este profesor en la misma fecha y hora.',
+        ]);
+        exit;
+    }
+
     $stmt = $pdo->prepare("
         INSERT INTO meetings (
             teacher_id, student_id, guardian_type, guardian_name, guardian_email, guardian_phone,
@@ -107,6 +124,14 @@ try {
 
     echo json_encode(['success' => true, 'message' => 'Reunión agendada correctamente.']);
 } catch (PDOException $e) {
+    if ((string) $e->getCode() === '23000') {
+        echo json_encode([
+            'success' => false,
+            'message' => 'No se puede agendar: ya existe una reunión para este profesor en la misma fecha y hora.',
+        ]);
+        exit;
+    }
+
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Error al agendar reunión.']);
 }

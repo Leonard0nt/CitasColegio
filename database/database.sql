@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS meetings (
         REFERENCES users(id)
         ON DELETE CASCADE,
 
-    INDEX idx_meetings_teacher_date (teacher_id, meeting_date, meeting_time),
+    UNIQUE KEY uniq_meetings_teacher_datetime (teacher_id, meeting_date, meeting_time),
     INDEX idx_meetings_student (student_id),
     INDEX idx_meetings_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
