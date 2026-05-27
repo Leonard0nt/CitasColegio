@@ -11,6 +11,13 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['ad
 require_once __DIR__ . '/../../includes/config-path.php';
 
 try {
+
+    $statusFilter = $_GET['status'] ?? 'all';
+    $allowedStatuses = ['all', 'atendido', 'por_atender'];
+    if (!in_array($statusFilter, $allowedStatuses, true)) {
+        $statusFilter = 'all';
+    }
+
     $sql = "
         SELECT
             m.id,
@@ -33,9 +40,20 @@ try {
     ";
 
     $params = [];
+    $conditions = [];
+
     if (($_SESSION['user_role'] ?? '') === 'profesor') {
-        $sql .= " WHERE m.teacher_id = :teacher_id";
+        $conditions[] = 'm.teacher_id = :teacher_id';
         $params[':teacher_id'] = (int) $_SESSION['user_id'];
+    }
+
+    if ($statusFilter !== 'all') {
+        $conditions[] = 'm.status = :status';
+        $params[':status'] = $statusFilter;
+    }
+
+    if ($conditions) {
+        $sql .= ' WHERE ' . implode(' AND ', $conditions);
     }
 
     $sql .= " ORDER BY m.meeting_date ASC, m.meeting_time ASC";
