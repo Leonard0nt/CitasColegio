@@ -12,6 +12,7 @@ const dateInput = document.getElementById('meeting_date');
 const timeInput = document.getElementById('meeting_time');
 const statusSelect = document.getElementById('status');
 const notesInput = document.getElementById('notes');
+const statusFilter = document.getElementById('statusFilter');
 const isAdmin = window.CURRENT_ROLE === 'admin';
 
 const attendancePinForm = document.getElementById('attendancePinForm');
@@ -101,7 +102,9 @@ function updateGuardianAvailability() {
 async function loadMeetings() {
     tableBody.innerHTML = '<tr><td colspan="8">Cargando reuniones...</td></tr>';
 
-    const res = await fetch('backend/meetings/list.php');
+    const filterValue = statusFilter?.value || 'all';
+    const query = filterValue === 'all' ? '' : `?status=${encodeURIComponent(filterValue)}`;
+    const res = await fetch(`backend/meetings/list.php${query}`);
     const data = await res.json();
 
     if (!data.success) {
@@ -210,6 +213,7 @@ if (openBtn) openBtn.addEventListener('click', openModal);
 if (closeBtn) closeBtn.addEventListener('click', closeModal);
 if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 if (studentSelect) studentSelect.addEventListener('change', updateGuardianAvailability);
+if (statusFilter) statusFilter.addEventListener('change', loadMeetings);
 
 if (isAdmin) {
     loadOptions().then(loadMeetings);

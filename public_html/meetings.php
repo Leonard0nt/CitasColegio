@@ -50,6 +50,15 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                 <?php endif; ?>
             </div>
 
+            <div class="form-inline" style="margin-bottom: 1rem;">
+                <label for="statusFilter">Ver reuniones:</label>
+                <select id="statusFilter">
+                    <option value="all">Todas</option>
+                    <option value="atendido">Asistidas</option>
+                    <option value="por_atender">No asistidas</option>
+                </select>
+            </div>
+
             <div class="table-wrapper">
                 <table>
                     <thead>
