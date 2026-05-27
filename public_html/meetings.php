@@ -43,11 +43,7 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                     <p>Administra y consulta las citas entre profesor y apoderado.</p>
                     <p><a href="today-meetings.php" target="_blank">Abrir vista pública de reuniones del día</a></p>
                 </div>
-                <?php if ($isAdmin): ?>
-                    <button class="btn btn-primary" id="openCreateMeetingBtn">Nueva reunión</button>
-                <?php else: ?>
-                    <span class="muted">Solo lectura para profesores</span>
-                <?php endif; ?>
+                <button class="btn btn-primary" id="openCreateMeetingBtn">Nueva reunión</button>
             </div>
 
             <div class="form-inline" style="margin-bottom: 1rem;">
@@ -106,6 +102,7 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                         <select name="teacher_id" id="teacher_id" required></select>
                     </label>
                 <?php else: ?>
+                    <input type="hidden" name="teacher_id" id="teacher_id" value="<?= (int) ($_SESSION['user_id'] ?? 0) ?>">
                     <div class="info-box">
                         Profesor: <strong><?= e($_SESSION['user_name']) ?></strong>
                     </div>

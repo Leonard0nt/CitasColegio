@@ -58,7 +58,7 @@ async function loadOptions() {
 
     options = data;
 
-    if (teacherSelect) {
+    if (teacherSelect && isAdmin) {
         teacherSelect.innerHTML = data.teachers.length
             ? data.teachers.map(t => `<option value="${t.id}">${escapeHtml(t.name)} (${escapeHtml(t.email)})</option>`).join('')
             : '<option value="">No hay profesores activos</option>';
@@ -158,7 +158,6 @@ function closeModal() {
 }
 
 form?.addEventListener('submit', async (e) => {
-    if (!isAdmin) return;
     e.preventDefault();
     const formData = new FormData(form);
 
@@ -215,11 +214,7 @@ if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 if (studentSelect) studentSelect.addEventListener('change', updateGuardianAvailability);
 if (statusFilter) statusFilter.addEventListener('change', loadMeetings);
 
-if (isAdmin) {
-    loadOptions().then(loadMeetings);
-} else {
-    loadMeetings();
-}
+loadOptions().then(loadMeetings);
 
 attendancePinForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
