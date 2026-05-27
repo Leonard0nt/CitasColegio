@@ -2,7 +2,7 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'profesor'], true)) {
+if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Acceso denegado.']);
     exit;
@@ -11,16 +11,8 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['ad
 require_once __DIR__ . '/../../includes/config-path.php';
 
 try {
-    if (($_SESSION['user_role'] ?? '') === 'admin') {
-        $stmtTeachers = $pdo->query("SELECT id, name, email FROM users WHERE role = 'profesor' AND active = 1 ORDER BY name ASC");
-        $teachers = $stmtTeachers->fetchAll();
-    } else {
-        $teachers = [[
-            'id' => (int) $_SESSION['user_id'],
-            'name' => $_SESSION['user_name'],
-            'email' => $_SESSION['user_email'],
-        ]];
-    }
+    $stmtTeachers = $pdo->query("SELECT id, name, email FROM users WHERE role = 'profesor' AND active = 1 ORDER BY name ASC");
+    $teachers = $stmtTeachers->fetchAll();
 
     $stmtStudents = $pdo->query("
         SELECT

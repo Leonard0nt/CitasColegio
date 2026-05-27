@@ -17,13 +17,13 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
             <div class="brand small">
                 <div class="brand-logo">R</div>
                 <div>
-                    <h1>Reuniones</h1>
+                    <h1>Registros de citas</h1>
                     <p>Profesor - apoderado</p>
                 </div>
             </div>
             <nav>
                 <a href="dashboard.php">Inicio</a>
-                <a href="meetings.php">Reuniones</a>
+                <a href="meetings.php">Registros de citas</a>
                 <?php if ($isAdmin): ?>
                     <a href="users.php">Usuarios</a>
                 <?php endif; ?>
@@ -38,10 +38,14 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
         <section class="panel">
             <div class="section-header">
                 <div>
-                    <h2>Agenda de reuniones / consultas</h2>
-                    <p>Registra fecha, hora, profesor, apoderado y estado de atención.</p>
+                    <h2>Registros de citas</h2>
+                    <p>Administra y consulta las citas entre profesor y apoderado.</p>
                 </div>
-                <button class="btn btn-primary" id="openCreateMeetingBtn">Nueva reunión</button>
+                <?php if ($isAdmin): ?>
+                    <button class="btn btn-primary" id="openCreateMeetingBtn">Nueva reunión</button>
+                <?php else: ?>
+                    <span class="muted">Solo lectura para profesores</span>
+                <?php endif; ?>
             </div>
 
             <div class="table-wrapper">

@@ -2,7 +2,7 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'profesor'], true)) {
+if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Acceso denegado.']);
     exit;
@@ -10,8 +10,7 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['ad
 
 require_once __DIR__ . '/../../includes/config-path.php';
 
-$role = $_SESSION['user_role'] ?? '';
-$teacherId = $role === 'admin' ? (int) ($_POST['teacher_id'] ?? 0) : (int) $_SESSION['user_id'];
+$teacherId = (int) ($_POST['teacher_id'] ?? 0);
 $studentId = (int) ($_POST['student_id'] ?? 0);
 $guardianType = $_POST['guardian_type'] ?? 'titular';
 $meetingDate = trim($_POST['meeting_date'] ?? '');

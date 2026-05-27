@@ -12,6 +12,7 @@ const dateInput = document.getElementById('meeting_date');
 const timeInput = document.getElementById('meeting_time');
 const statusSelect = document.getElementById('status');
 const notesInput = document.getElementById('notes');
+const isAdmin = window.CURRENT_ROLE === 'admin';
 
 let options = { teachers: [], students: [] };
 
@@ -125,10 +126,12 @@ async function loadMeetings() {
             <td>${escapeHtml(formatTime(m.meeting_time))}</td>
             <td><span class="badge ${m.status}">${statusLabel(m.status)}</span></td>
             <td class="actions-cell">
-                <button class="btn btn-small" onclick="toggleStatus(${m.id}, '${m.status === 'atendido' ? 'por_atender' : 'atendido'}')">
-                    ${m.status === 'atendido' ? 'Por atender' : 'Atendido'}
-                </button>
-                <button class="btn btn-danger btn-small" onclick="deleteMeeting(${m.id})">Eliminar</button>
+                ${isAdmin ? `
+                    <button class="btn btn-small" onclick="toggleStatus(${m.id}, '${m.status === 'atendido' ? 'por_atender' : 'atendido'}')">
+                        ${m.status === 'atendido' ? 'Por atender' : 'Atendido'}
+                    </button>
+                    <button class="btn btn-danger btn-small" onclick="deleteMeeting(${m.id})">Eliminar</button>
+                ` : '<span class="muted">Solo lectura</span>'}
             </td>
         </tr>
     `).join('');
@@ -148,7 +151,8 @@ function closeModal() {
     modal.classList.add('hidden');
 }
 
-form.addEventListener('submit', async (e) => {
+form?.addEventListener('submit', async (e) => {
+    if (!isAdmin) return;
     e.preventDefault();
     const formData = new FormData(form);
 
@@ -167,6 +171,7 @@ form.addEventListener('submit', async (e) => {
 });
 
 async function toggleStatus(id, status) {
+    if (!isAdmin) return;
     const formData = new FormData();
     formData.append('id', id);
     formData.append('status', status);
@@ -182,6 +187,7 @@ async function toggleStatus(id, status) {
 }
 
 async function deleteMeeting(id) {
+    if (!isAdmin) return;
     if (!confirm('¿Eliminar esta reunión?')) return;
 
     const formData = new FormData();
@@ -197,9 +203,13 @@ async function deleteMeeting(id) {
     if (data.success) loadMeetings();
 }
 
-openBtn.addEventListener('click', openModal);
-closeBtn.addEventListener('click', closeModal);
-cancelBtn.addEventListener('click', closeModal);
-studentSelect.addEventListener('change', updateGuardianAvailability);
+if (openBtn) openBtn.addEventListener('click', openModal);
+if (closeBtn) closeBtn.addEventListener('click', closeModal);
+if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+if (studentSelect) studentSelect.addEventListener('change', updateGuardianAvailability);
 
-loadOptions().then(loadMeetings);
+if (isAdmin) {
+    loadOptions().then(loadMeetings);
+} else {
+    loadMeetings();
+}

@@ -2,7 +2,7 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
-if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'profesor'], true)) {
+if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Acceso denegado.']);
     exit;
@@ -21,11 +21,6 @@ if ($id <= 0 || !in_array($status, ['por_atender', 'atendido'], true)) {
 try {
     $sql = 'UPDATE meetings SET status = :status WHERE id = :id';
     $params = [':status' => $status, ':id' => $id];
-
-    if (($_SESSION['user_role'] ?? '') === 'profesor') {
-        $sql .= ' AND teacher_id = :teacher_id';
-        $params[':teacher_id'] = (int) $_SESSION['user_id'];
-    }
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
