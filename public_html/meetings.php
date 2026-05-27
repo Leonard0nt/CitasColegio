@@ -40,6 +40,7 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                 <div>
                     <h2>Registros de citas</h2>
                     <p>Administra y consulta las citas entre profesor y apoderado.</p>
+                    <p><a href="today-meetings.php" target="_blank">Abrir vista pública de reuniones del día</a></p>
                 </div>
                 <?php if ($isAdmin): ?>
                     <button class="btn btn-primary" id="openCreateMeetingBtn">Nueva reunión</button>
@@ -68,6 +69,17 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                 </table>
             </div>
         </section>
+
+        <?php if ($isAdmin): ?>
+            <section class="panel">
+                <h3>PIN de confirmación de asistencia</h3>
+                <p class="muted">Define el PIN de 4 números usado en la vista pública para confirmar asistencia.</p>
+                <form id="attendancePinForm" class="form-inline">
+                    <input type="password" name="pin" id="attendancePin" maxlength="4" pattern="\d{4}" inputmode="numeric" placeholder="1234" required>
+                    <button type="submit" class="btn btn-primary">Guardar PIN</button>
+                </form>
+            </section>
+        <?php endif; ?>
     </main>
 
     <div class="modal hidden" id="meetingModal">

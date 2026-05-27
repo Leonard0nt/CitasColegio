@@ -14,6 +14,9 @@ const statusSelect = document.getElementById('status');
 const notesInput = document.getElementById('notes');
 const isAdmin = window.CURRENT_ROLE === 'admin';
 
+const attendancePinForm = document.getElementById('attendancePinForm');
+const attendancePinInput = document.getElementById('attendancePin');
+
 let options = { teachers: [], students: [] };
 
 function showAlert(message, type = 'success') {
@@ -213,3 +216,28 @@ if (isAdmin) {
 } else {
     loadMeetings();
 }
+
+attendancePinForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pin = (attendancePinInput.value || '').trim();
+
+    if (!/^\d{4}$/.test(pin)) {
+        showAlert('El PIN debe contener exactamente 4 números.', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('pin', pin);
+
+    const res = await fetch('backend/meetings/save-pin.php', {
+        method: 'POST',
+        body: formData,
+    });
+
+    const data = await res.json();
+    showAlert(data.message || 'PIN actualizado.', data.success ? 'success' : 'error');
+
+    if (data.success) {
+        attendancePinForm.reset();
+    }
+});

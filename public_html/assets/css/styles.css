@@ -423,3 +423,6 @@ textarea {
 
 .badge.por_atender { background: #fef3c7; color: #92400e; }
 .badge.atendido { background: #dcfce7; color: #166534; }
+
+.form-inline { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.form-inline input { width: 120px; }
