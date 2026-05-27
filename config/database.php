@@ -4,11 +4,10 @@
 // Idealmente esta carpeta config debe quedar FUERA de public_html.
 // Ejemplo: /home/usuario_cpanel/config/database.php
 
-$host = 'localhost';
-$dbname = 'TU_USUARIO_CPANEL_TU_BASE_DE_DATOS';
-$username = 'TU_USUARIO_CPANEL_TU_USUARIO_MYSQL';
-$password = 'TU_PASSWORD_MYSQL';
-
+$host = getenv('DB_HOST') ?: 'localhost';
+$dbname = getenv('DB_NAME') ?: 'php_users_backend';
+$username = getenv('DB_USER') ?: 'phpuser';
+$password = getenv('DB_PASS') ?: '123456';
 try {
     $pdo = new PDO(
         "mysql:host={$host};dbname={$dbname};charset=utf8mb4",
@@ -23,4 +22,7 @@ try {
 } catch (PDOException $e) {
     http_response_code(500);
     die('Error de conexión a la base de datos.');
+    if (PHP_SAPI === 'cli-server') {
+        error_log('DB connection error: ' . $e->getMessage());
+    }
 }
