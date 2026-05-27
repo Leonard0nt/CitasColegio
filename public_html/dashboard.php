@@ -28,6 +28,7 @@ require_login();
                 <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
                     <a href="users.php">Usuarios</a>
                 <?php endif; ?>
+                <a href="profile.php">Perfil</a>
                 <a class="btn btn-danger" href="backend/auth/logout.php">Salir</a>
             </nav>
         </div>

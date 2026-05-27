@@ -24,6 +24,7 @@ require_admin();
                 <a href="dashboard.php">Inicio</a>
                 <a href="meetings.php">Reuniones</a>
                 <a href="users.php">Usuarios</a>
+                <a href="profile.php">Perfil</a>
                 <a class="btn btn-danger" href="backend/auth/logout.php">Salir</a>
             </nav>
         </div>
