@@ -27,6 +27,7 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                 <?php if ($isAdmin): ?>
                     <a href="users.php">Usuarios</a>
                 <?php endif; ?>
+                <a href="profile.php">Perfil</a>
                 <a class="btn btn-danger" href="backend/auth/logout.php">Salir</a>
             </nav>
         </div>
