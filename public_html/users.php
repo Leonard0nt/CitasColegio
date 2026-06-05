@@ -39,7 +39,10 @@ require_admin();
                     <h2>Gestión de usuarios</h2>
                     <p>Crea administradores, profesores y alumnos con apoderado titular y suplente.</p>
                 </div>
-                <button class="btn btn-primary" id="openCreateBtn">Nuevo usuario</button>
+                <div class="section-actions">
+                    <button class="btn" id="openUploadBtn">Subir profesores CSV</button>
+                    <button class="btn btn-primary" id="openCreateBtn">Nuevo usuario</button>
+                </div>
             </div>
 
             <div class="table-wrapper">
@@ -51,6 +54,9 @@ require_admin();
                             <th>Correo</th>
                             <th>Rol</th>
                             <th>Estado</th>
+                            <th>RUT profesor</th>
+                            <th>Centro costo</th>
+                            <th>Móvil</th>
                             <th>Apoderado</th>
                             <th>Apoderado suplente</th>
                             <th>Creado</th>
@@ -58,7 +64,7 @@ require_admin();
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
-                        <tr><td colspan="9">Cargando usuarios...</td></tr>
+                        <tr><td colspan="12">Cargando usuarios...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -107,6 +113,27 @@ require_admin();
                             <option value="0">Inactivo</option>
                         </select>
                     </label>
+                </div>
+
+                <div id="teacherFields" class="guardian-box hidden">
+                    <h3>Atributos del profesor</h3>
+
+                    <div class="form-grid">
+                        <label>
+                            Centro costo
+                            <input type="text" name="teacher_cost_center" id="teacher_cost_center" placeholder="Profesores Media">
+                        </label>
+
+                        <label>
+                            RUT profesor
+                            <input type="text" name="teacher_rut" id="teacher_rut" placeholder="12.345.678-9">
+                        </label>
+
+                        <label>
+                            Móvil
+                            <input type="text" name="teacher_phone" id="teacher_phone" placeholder="56912345678">
+                        </label>
+                    </div>
                 </div>
 
                 <div id="guardianFields" class="guardian-box hidden">
@@ -172,6 +199,39 @@ require_admin();
                 <div class="modal-actions">
                     <button type="button" class="btn" id="cancelBtn">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="uploadModal">
+        <div class="modal-card">
+            <div class="section-header">
+                <div>
+                    <h2>Subir profesores CSV</h2>
+                    <p>Usa columnas como Centro Costo, Rut, Nombre Completo, Móvil y Email.</p>
+                </div>
+                <button class="icon-btn" id="closeUploadModalBtn">×</button>
+            </div>
+
+            <form id="uploadTeachersForm" class="form">
+                <label>
+                    Archivo CSV
+                    <input type="file" name="teachers_csv" id="teachers_csv" accept=".csv,text/csv" required>
+                </label>
+
+                <label>
+                    Contraseña inicial para profesores nuevos
+                    <input type="text" name="default_password" id="default_password" value="Profesor12345" minlength="8" required>
+                </label>
+
+                <p class="muted small-text">Si una fila no trae correo válido, se generará uno interno usando el RUT para permitir crear el perfil.</p>
+
+                <div id="uploadResult" class="info-box hidden"></div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn" id="cancelUploadBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Subir</button>
                 </div>
             </form>
         </div>

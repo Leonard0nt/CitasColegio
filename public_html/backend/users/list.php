@@ -10,6 +10,9 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 }
 
 require_once __DIR__ . '/../../includes/config-path.php';
+require_once __DIR__ . '/teacher-profile-helpers.php';
+
+ensure_teacher_profiles_table($pdo);
 
 $stmt = $pdo->query("
     SELECT
@@ -19,6 +22,10 @@ $stmt = $pdo->query("
         u.role,
         u.active,
         u.created_at,
+
+        tp.cost_center AS teacher_cost_center,
+        tp.rut AS teacher_rut,
+        tp.phone AS teacher_phone,
 
         sg.guardian_name,
         sg.guardian_rut,
@@ -33,6 +40,7 @@ $stmt = $pdo->query("
         sg.backup_guardian_relationship
     FROM users u
     LEFT JOIN student_guardians sg ON sg.student_id = u.id
+    LEFT JOIN teacher_profiles tp ON tp.user_id = u.id
     ORDER BY u.id DESC
 ");
 

@@ -8,6 +8,13 @@ const closeModalBtn = document.getElementById('closeModalBtn');
 const cancelBtn = document.getElementById('cancelBtn');
 const roleSelect = document.getElementById('role');
 const guardianFields = document.getElementById('guardianFields');
+const teacherFields = document.getElementById('teacherFields');
+const uploadModal = document.getElementById('uploadModal');
+const openUploadBtn = document.getElementById('openUploadBtn');
+const closeUploadModalBtn = document.getElementById('closeUploadModalBtn');
+const cancelUploadBtn = document.getElementById('cancelUploadBtn');
+const uploadTeachersForm = document.getElementById('uploadTeachersForm');
+const uploadResult = document.getElementById('uploadResult');
 
 let editing = false;
 let usersCache = [];
@@ -33,6 +40,20 @@ function closeModal() {
     toggleGuardianFields();
 }
 
+function openUploadModal() {
+    uploadResult.className = 'info-box hidden';
+    uploadResult.textContent = '';
+    uploadTeachersForm.reset();
+    document.getElementById('default_password').value = 'Profesor12345';
+    uploadModal.classList.remove('hidden');
+}
+
+function closeUploadModal() {
+    uploadModal.classList.add('hidden');
+    uploadTeachersForm.reset();
+    uploadResult.className = 'info-box hidden';
+}
+
 function setFormUser(user) {
     document.getElementById('userId').value = user.id || '';
     document.getElementById('name').value = user.name || '';
@@ -40,6 +61,9 @@ function setFormUser(user) {
     document.getElementById('role').value = user.role || 'alumno';
     document.getElementById('active').value = String(user.active ?? 1);
     document.getElementById('password').value = '';
+    document.getElementById('teacher_cost_center').value = user.teacher_cost_center || '';
+    document.getElementById('teacher_rut').value = user.teacher_rut || '';
+    document.getElementById('teacher_phone').value = user.teacher_phone || '';
 
     document.getElementById('guardian_name').value = user.guardian_name || '';
     document.getElementById('guardian_rut').value = user.guardian_rut || '';
@@ -72,7 +96,7 @@ function renderUsers(users) {
     usersCache = users;
 
     if (!users.length) {
-        tableBody.innerHTML = '<tr><td colspan="9">No hay usuarios registrados.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="12">No hay usuarios registrados.</td></tr>';
         return;
     }
 
@@ -83,6 +107,9 @@ function renderUsers(users) {
             <td>${escapeHtml(user.email)}</td>
             <td><span class="badge ${escapeHtml(user.role)}">${roleLabel(user.role)}</span></td>
             <td><span class="badge ${Number(user.active) === 1 ? 'active' : 'inactive'}">${Number(user.active) === 1 ? 'Activo' : 'Inactivo'}</span></td>
+            <td>${teacherAttribute(user, 'teacher_rut')}</td>
+            <td>${teacherAttribute(user, 'teacher_cost_center')}</td>
+            <td>${teacherAttribute(user, 'teacher_phone')}</td>
             <td>${guardianSummary(user, false)}</td>
             <td>${guardianSummary(user, true)}</td>
             <td>${escapeHtml(user.created_at)}</td>
@@ -94,6 +121,12 @@ function renderUsers(users) {
             </td>
         </tr>
     `).join('');
+}
+
+function teacherAttribute(user, key) {
+    if (user.role !== 'profesor') return 'No aplica';
+
+    return user[key] ? escapeHtml(user[key]) : 'Sin dato';
 }
 
 function guardianSummary(user, backup = false) {
@@ -131,15 +164,21 @@ function escapeHtml(value) {
 }
 
 function toggleGuardianFields() {
-    if (!roleSelect || !guardianFields) return;
+    if (!roleSelect || !guardianFields || !teacherFields) return;
 
     const requiredInputs = [document.getElementById('guardian_name')];
 
     if (roleSelect.value === 'alumno') {
         guardianFields.classList.remove('hidden');
+        teacherFields.classList.add('hidden');
         requiredInputs.forEach(input => input && input.setAttribute('required', 'required'));
+    } else if (roleSelect.value === 'profesor') {
+        guardianFields.classList.add('hidden');
+        teacherFields.classList.remove('hidden');
+        requiredInputs.forEach(input => input && input.removeAttribute('required'));
     } else {
         guardianFields.classList.add('hidden');
+        teacherFields.classList.add('hidden');
         requiredInputs.forEach(input => input && input.removeAttribute('required'));
     }
 }
@@ -153,7 +192,7 @@ async function loadUsers() {
         }
         renderUsers(data.users);
     } catch (error) {
-        tableBody.innerHTML = '<tr><td colspan="9">Error cargando usuarios.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="12">Error cargando usuarios.</td></tr>';
     }
 }
 
@@ -195,9 +234,16 @@ openCreateBtn.addEventListener('click', () => {
 
 closeModalBtn.addEventListener('click', closeModal);
 cancelBtn.addEventListener('click', closeModal);
+openUploadBtn.addEventListener('click', openUploadModal);
+closeUploadModalBtn.addEventListener('click', closeUploadModal);
+cancelUploadBtn.addEventListener('click', closeUploadModal);
 
 modal.addEventListener('click', (event) => {
     if (event.target === modal) closeModal();
+});
+
+uploadModal.addEventListener('click', (event) => {
+    if (event.target === uploadModal) closeUploadModal();
 });
 
 if (roleSelect) {
@@ -230,6 +276,37 @@ userForm.addEventListener('submit', async (event) => {
         }
     } catch (error) {
         showAlert('Error al guardar usuario.', 'error');
+    }
+});
+
+uploadTeachersForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const submitButton = uploadTeachersForm.querySelector('button[type="submit"]');
+    const formData = new FormData(uploadTeachersForm);
+    submitButton.disabled = true;
+    uploadResult.className = 'info-box';
+    uploadResult.textContent = 'Procesando CSV...';
+
+    try {
+        const data = await request('backend/users/upload-teachers.php', formData);
+        const errors = Array.isArray(data.errors) && data.errors.length
+            ? `\n${data.errors.join('\n')}`
+            : '';
+
+        uploadResult.className = `info-box ${data.success ? 'success-text' : 'error-text'}`;
+        uploadResult.textContent = `${data.message || 'Proceso terminado.'}${errors}`;
+        showAlert(data.message || 'Carga finalizada.', data.success ? 'success' : 'error');
+
+        if (data.success) {
+            loadUsers();
+        }
+    } catch (error) {
+        uploadResult.className = 'info-box error-text';
+        uploadResult.textContent = 'Error al subir profesores.';
+        showAlert('Error al subir profesores.', 'error');
+    } finally {
+        submitButton.disabled = false;
     }
 });
 
