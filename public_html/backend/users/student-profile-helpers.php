@@ -28,7 +28,7 @@ function ensure_student_guardians_table(PDO $pdo): void
 {
     ensure_students_table($pdo);
 
-    $pdo->exec('
+    $pdo->exec(<<<SQL
         CREATE TABLE IF NOT EXISTS student_guardians (
             id INT AUTO_INCREMENT PRIMARY KEY,
             student_id INT NOT NULL,
@@ -55,84 +55,24 @@ function ensure_student_guardians_table(PDO $pdo): void
 
             UNIQUE KEY unique_student_guardian (student_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    ');
+SQL);
 
-    ensure_student_guardians_columns($pdo);
     migrate_legacy_student_guardians_fk($pdo);
-}
-
-function ensure_student_guardians_columns(PDO $pdo): void
-{
-    $stmt = $pdo->prepare('
-        SELECT column_name
-        FROM information_schema.COLUMNS
-        WHERE table_schema = DATABASE()
-          AND table_name = \'student_guardians\'
-    ');
-    $stmt->execute();
-    $columns = array_flip($stmt->fetchAll(PDO::FETCH_COLUMN));
-
-    $expectedColumns = [
-        'guardian_rut' => 'VARCHAR(20) NULL',
-        'guardian_phone' => 'VARCHAR(30) NULL',
-        'guardian_email' => 'VARCHAR(150) NULL',
-        'guardian_relationship' => 'VARCHAR(80) NULL',
-        'backup_guardian_name' => 'VARCHAR(120) NULL',
-        'backup_guardian_rut' => 'VARCHAR(20) NULL',
-        'backup_guardian_phone' => 'VARCHAR(30) NULL',
-        'backup_guardian_email' => 'VARCHAR(150) NULL',
-        'backup_guardian_relationship' => 'VARCHAR(80) NULL',
-        'created_at' => 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
-        'updated_at' => 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
-    ];
-
-    foreach ($expectedColumns as $column => $definition) {
-        if (isset($columns[$column])) {
-            continue;
-        }
-
-        $pdo->exec('ALTER TABLE student_guardians ADD COLUMN `' . $column . '` ' . $definition);
-    }
-
-    $stmt = $pdo->prepare('
-        SELECT COUNT(*)
-        FROM information_schema.STATISTICS
-        WHERE table_schema = DATABASE()
-          AND table_name = \'student_guardians\'
-          AND index_name = \'unique_student_guardian\'
-    ');
-    $stmt->execute();
-
-    if ((int) $stmt->fetchColumn() === 0) {
-        remove_duplicate_student_guardians($pdo);
-        $pdo->exec('ALTER TABLE student_guardians ADD UNIQUE KEY unique_student_guardian (student_id)');
-    }
-}
-
-function remove_duplicate_student_guardians(PDO $pdo): void
-{
-    $pdo->exec('
-        DELETE sg1
-        FROM student_guardians sg1
-        INNER JOIN student_guardians sg2
-            ON sg1.student_id = sg2.student_id
-           AND sg1.id > sg2.id
-    ');
 }
 
 function migrate_legacy_student_guardians_fk(PDO $pdo): void
 {
-    $stmt = $pdo->prepare('
+    $stmt = $pdo->prepare(<<<SQL
         SELECT
             constraint_name,
             referenced_table_name,
             referenced_column_name
         FROM information_schema.KEY_COLUMN_USAGE
         WHERE table_schema = DATABASE()
-          AND table_name = \'student_guardians\'
-          AND column_name = \'student_id\'
+          AND table_name = 'student_guardians'
+          AND column_name = 'student_id'
           AND referenced_table_name IS NOT NULL
-    ');
+SQL);
     $stmt->execute();
     $foreignKeys = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -156,46 +96,40 @@ function migrate_legacy_student_guardians_fk(PDO $pdo): void
 
     copy_legacy_student_users_to_students($pdo);
 
-    $pdo->exec('
+    $pdo->exec(<<<SQL
         DELETE sg
         FROM student_guardians sg
         LEFT JOIN students s ON s.id = sg.student_id
         WHERE s.id IS NULL
-    ');
+SQL);
 
-    try {
-        $pdo->exec('
-            ALTER TABLE student_guardians
-            ADD CONSTRAINT fk_student_guardians_student
-            FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
-        ');
-    } catch (PDOException $e) {
-        error_log('No se pudo agregar la llave foránea student_guardians -> students: ' . $e->getMessage());
-    }
+    $pdo->exec(<<<SQL
+        ALTER TABLE student_guardians
+        ADD CONSTRAINT fk_student_guardians_student
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+SQL);
 }
 
 function copy_legacy_student_users_to_students(PDO $pdo): void
 {
-    $stmt = $pdo->prepare('
-        SELECT column_type
-        FROM information_schema.COLUMNS
-        WHERE table_schema = DATABASE()
-          AND table_name = \'users\'
-          AND column_name = \'role\'
-    ');
-    $stmt->execute();
-    $roleColumnType = (string) $stmt->fetchColumn();
-
-    if ($roleColumnType === '' || strpos($roleColumnType, "'alumno'") === false) {
-        return;
-    }
-
-    $stmt = $pdo->prepare('
+    $stmt = $pdo->prepare(<<<SQL
         SELECT COUNT(*)
         FROM information_schema.TABLES
         WHERE table_schema = DATABASE()
-          AND table_name = \'student_profiles\'
-    ');
+          AND table_name = 'users'
+SQL);
+    $stmt->execute();
+
+    if ((int) $stmt->fetchColumn() === 0) {
+        return;
+    }
+
+    $stmt = $pdo->prepare(<<<SQL
+        SELECT COUNT(*)
+        FROM information_schema.TABLES
+        WHERE table_schema = DATABASE()
+          AND table_name = 'student_profiles'
+SQL);
     $stmt->execute();
     $hasStudentProfiles = (int) $stmt->fetchColumn() > 0;
 
@@ -204,30 +138,16 @@ function copy_legacy_student_users_to_students(PDO $pdo): void
     $profileJoin = $hasStudentProfiles ? 'LEFT JOIN student_profiles sp ON sp.user_id = u.id' : '';
 
     $pdo->exec("
-        UPDATE students s
-        INNER JOIN users u ON u.id = s.id
-        {$profileJoin}
-        SET
-            s.name = u.name,
-            s.active = u.active,
-            s.course = {$courseSelect},
-            s.rut = {$rutSelect}
-        WHERE u.role = 'alumno'
-    ");
-
-    $pdo->exec("
         INSERT INTO students (id, name, active, course, rut, created_at, updated_at)
         SELECT u.id, u.name, u.active, {$courseSelect}, {$rutSelect}, u.created_at, u.updated_at
         FROM users u
         {$profileJoin}
-        LEFT JOIN students existing_id ON existing_id.id = u.id
-        LEFT JOIN students existing_rut
-            ON {$rutSelect} IS NOT NULL
-           AND {$rutSelect} <> ''
-           AND existing_rut.rut = {$rutSelect}
         WHERE u.role = 'alumno'
-          AND existing_id.id IS NULL
-          AND existing_rut.id IS NULL
+        ON DUPLICATE KEY UPDATE
+            name = VALUES(name),
+            active = VALUES(active),
+            course = VALUES(course),
+            rut = VALUES(rut)
     ");
 }
 
