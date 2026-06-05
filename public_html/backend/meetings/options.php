@@ -21,6 +21,8 @@ try {
         SELECT
             u.id,
             u.name,
+            u.course AS student_course,
+            u.rut AS student_rut,
             '' AS email,
             sg.guardian_name,
             sg.guardian_email,
@@ -31,7 +33,7 @@ try {
         FROM students u
         INNER JOIN student_guardians sg ON sg.student_id = u.id
         WHERE u.active = 1
-        ORDER BY u.name ASC
+        ORDER BY u.course ASC, u.name ASC
     ");
 
     echo json_encode([
