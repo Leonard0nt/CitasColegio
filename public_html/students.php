@@ -54,7 +54,6 @@ require_admin();
                             <th>Nombre</th>
                             <th>Curso</th>
                             <th>RUT alumno</th>
-                            <th>Correo</th>
                             <th>Estado</th>
                             <th>Apoderado titular</th>
                             <th>Apoderado suplente</th>
@@ -62,7 +61,7 @@ require_admin();
                         </tr>
                     </thead>
                     <tbody id="studentsTableBody">
-                        <tr><td colspan="9">Cargando alumnos...</td></tr>
+                        <tr><td colspan="8">Cargando alumnos...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -94,17 +93,6 @@ require_admin();
                         RUT alumno
                         <input type="text" name="student_rut" id="student_rut" placeholder="27.562.097-1">
                     </label>
-
-                    <label>
-                        Correo interno (opcional)
-                        <input type="email" name="email" id="email" placeholder="Se genera automáticamente si queda vacío">
-                    </label>
-
-                    <label>
-                        Contraseña interna (opcional)
-                        <input type="password" name="password" id="password" placeholder="No habilita inicio de sesión para alumnos">
-                    </label>
-
                     <label>
                         Estado
                         <select name="active" id="active">
@@ -199,8 +187,8 @@ require_admin();
                     <input type="file" name="students_csv" id="students_csv" accept=".csv,text/csv" required>
                 </label>
 
-                <p class="muted small-text">El usuario de cada alumno será su RUT sin puntos ni guion. La contraseña inicial será los últimos 4 números del RUT antes del verificador; por ejemplo: 27.562.097-1 → usuario 275620971 y clave 2097.</p>
-                <p class="muted small-text">Como el archivo no trae correo del alumno, se generará un correo interno usando su RUT para crear el perfil. Si no viene apoderado, se guardará como “Apoderado no informado”.</p>
+                <p class="muted small-text">La carga crea referencias de alumnos para reuniones; no crea usuarios, correos internos, contraseñas ni perfiles de acceso.</p>
+                <p class="muted small-text">Si no viene apoderado, se guardará como “Apoderado no informado”.</p>
 
                 <div id="uploadResult" class="info-box hidden"></div>
 

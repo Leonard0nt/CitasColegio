@@ -36,7 +36,7 @@ try {
             m.created_at
         FROM meetings m
         INNER JOIN users t ON t.id = m.teacher_id
-        INNER JOIN users s ON s.id = m.student_id
+        INNER JOIN students s ON s.id = m.student_id
     ";
 
     $params = [];

@@ -10,11 +10,23 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 }
 
 require_once __DIR__ . '/../../includes/config-path.php';
+require_once __DIR__ . '/student-profile-helpers.php';
 
 $id = (int) ($_POST['id'] ?? 0);
+$role = $_POST['role'] ?? '';
 
 if ($id <= 0) {
     echo json_encode(['success' => false, 'message' => 'ID inválido.']);
+    exit;
+}
+
+if ($role === 'alumno') {
+    ensure_students_table($pdo);
+
+    $stmt = $pdo->prepare('DELETE FROM students WHERE id = :id');
+    $stmt->execute([':id' => $id]);
+
+    echo json_encode(['success' => true, 'message' => 'Alumno eliminado correctamente.']);
     exit;
 }
 

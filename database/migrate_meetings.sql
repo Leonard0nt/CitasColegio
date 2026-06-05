@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS meetings (
 
     CONSTRAINT fk_meetings_student
         FOREIGN KEY (student_id)
-        REFERENCES users(id)
+        REFERENCES students(id)
         ON DELETE CASCADE,
 
     INDEX idx_meetings_teacher_date (teacher_id, meeting_date, meeting_time),

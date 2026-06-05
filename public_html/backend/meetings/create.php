@@ -54,9 +54,9 @@ try {
             sg.backup_guardian_name,
             sg.backup_guardian_email,
             sg.backup_guardian_phone
-        FROM users u
+        FROM students u
         INNER JOIN student_guardians sg ON sg.student_id = u.id
-        WHERE u.id = :id AND u.role = 'alumno' AND u.active = 1
+        WHERE u.id = :id AND u.active = 1
         LIMIT 1
     ");
     $stmtStudent->execute([':id' => $studentId]);

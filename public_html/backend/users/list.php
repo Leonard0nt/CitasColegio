@@ -15,59 +15,98 @@ require_once __DIR__ . '/student-profile-helpers.php';
 require_once __DIR__ . '/encoding-helpers.php';
 
 ensure_teacher_profiles_table($pdo);
-ensure_student_profiles_table($pdo);
+ensure_students_table($pdo);
 
 $role = $_GET['role'] ?? '';
 $allowedRoles = ['admin', 'profesor', 'alumno'];
-$whereSql = '';
-$params = [];
 
-if ($role !== '') {
-    if (!in_array($role, $allowedRoles, true)) {
-        echo json_encode(['success' => false, 'message' => 'Rol inválido.']);
-        exit;
-    }
-
-    $whereSql = 'WHERE u.role = :role';
-    $params[':role'] = $role;
+if ($role !== '' && !in_array($role, $allowedRoles, true)) {
+    echo json_encode(['success' => false, 'message' => 'Rol inválido.']);
+    exit;
 }
 
-$stmt = $pdo->prepare("
-    SELECT
-        u.id,
-        u.name,
-        u.email,
-        u.role,
-        u.active,
-        u.created_at,
+if ($role === 'alumno') {
+    $stmt = $pdo->query("
+        SELECT
+            s.id,
+            s.name,
+            '' AS email,
+            'alumno' AS role,
+            s.active,
+            s.created_at,
 
-        tp.cost_center AS teacher_cost_center,
-        tp.rut AS teacher_rut,
-        tp.phone AS teacher_phone,
+            NULL AS teacher_cost_center,
+            NULL AS teacher_rut,
+            NULL AS teacher_phone,
 
-        sp.course AS student_course,
-        sp.rut AS student_rut,
+            s.course AS student_course,
+            s.rut AS student_rut,
 
-        sg.guardian_name,
-        sg.guardian_rut,
-        sg.guardian_phone,
-        sg.guardian_email,
-        sg.guardian_relationship,
+            sg.guardian_name,
+            sg.guardian_rut,
+            sg.guardian_phone,
+            sg.guardian_email,
+            sg.guardian_relationship,
 
-        sg.backup_guardian_name,
-        sg.backup_guardian_rut,
-        sg.backup_guardian_phone,
-        sg.backup_guardian_email,
-        sg.backup_guardian_relationship
-    FROM users u
-    LEFT JOIN student_guardians sg ON sg.student_id = u.id
-    LEFT JOIN teacher_profiles tp ON tp.user_id = u.id
-    LEFT JOIN student_profiles sp ON sp.user_id = u.id
-    $whereSql
-    ORDER BY u.id DESC
-");
+            sg.backup_guardian_name,
+            sg.backup_guardian_rut,
+            sg.backup_guardian_phone,
+            sg.backup_guardian_email,
+            sg.backup_guardian_relationship
+        FROM students s
+        LEFT JOIN student_guardians sg ON sg.student_id = s.id
+        ORDER BY s.id DESC
+    ");
 
-$stmt->execute($params);
+    $users = $stmt->fetchAll();
+} else {
+    $whereSql = '';
+    $params = [];
+
+    if ($role !== '') {
+        $whereSql = 'WHERE u.role = :role';
+        $params[':role'] = $role;
+    } else {
+        $whereSql = "WHERE u.role IN ('admin', 'profesor')";
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT
+            u.id,
+            u.name,
+            u.email,
+            u.role,
+            u.active,
+            u.created_at,
+
+            tp.cost_center AS teacher_cost_center,
+            tp.rut AS teacher_rut,
+            tp.phone AS teacher_phone,
+
+            NULL AS student_course,
+            NULL AS student_rut,
+
+            NULL AS guardian_name,
+            NULL AS guardian_rut,
+            NULL AS guardian_phone,
+            NULL AS guardian_email,
+            NULL AS guardian_relationship,
+
+            NULL AS backup_guardian_name,
+            NULL AS backup_guardian_rut,
+            NULL AS backup_guardian_phone,
+            NULL AS backup_guardian_email,
+            NULL AS backup_guardian_relationship
+        FROM users u
+        LEFT JOIN teacher_profiles tp ON tp.user_id = u.id
+        $whereSql
+        ORDER BY u.id DESC
+    ");
+
+    $stmt->execute($params);
+    $users = $stmt->fetchAll();
+}
+
 $users = array_map(static function (array $user): array {
     foreach (['name', 'email', 'role', 'teacher_cost_center', 'teacher_rut', 'teacher_phone', 'student_course', 'student_rut', 'guardian_name', 'guardian_rut', 'guardian_phone', 'guardian_email', 'backup_guardian_name', 'backup_guardian_rut', 'backup_guardian_phone', 'backup_guardian_email'] as $key) {
         if (isset($user[$key])) {
@@ -76,6 +115,6 @@ $users = array_map(static function (array $user): array {
     }
 
     return $user;
-}, $stmt->fetchAll());
+}, $users);
 
 echo json_encode(['success' => true, 'users' => $users]);

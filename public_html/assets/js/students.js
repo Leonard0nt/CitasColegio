@@ -52,9 +52,7 @@ function closeUploadModal() {
 function setFormStudent(student) {
     document.getElementById('studentId').value = student.id || '';
     document.getElementById('name').value = student.name || '';
-    document.getElementById('email').value = student.email || '';
     document.getElementById('active').value = String(student.active ?? 1);
-    document.getElementById('password').value = '';
     document.getElementById('student_course').value = student.student_course || '';
     document.getElementById('student_rut').value = student.student_rut || '';
 
@@ -87,7 +85,7 @@ function renderStudents(students) {
     studentsCache = students;
 
     if (!students.length) {
-        tableBody.innerHTML = '<tr><td colspan="9">No hay alumnos registrados.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8">No hay alumnos registrados.</td></tr>';
         return;
     }
 
@@ -97,7 +95,6 @@ function renderStudents(students) {
             <td>${escapeHtml(student.name)}</td>
             <td>${studentAttribute(student, 'student_course')}</td>
             <td>${studentAttribute(student, 'student_rut')}</td>
-            <td>${escapeHtml(student.email)}</td>
             <td><span class="badge ${Number(student.active) === 1 ? 'active' : 'inactive'}">${Number(student.active) === 1 ? 'Activo' : 'Inactivo'}</span></td>
             <td>${guardianSummary(student, false)}</td>
             <td>${guardianSummary(student, true)}</td>
@@ -171,7 +168,7 @@ async function loadStudents() {
         }
         renderStudents(data.users);
     } catch (error) {
-        tableBody.innerHTML = '<tr><td colspan="9">Error cargando alumnos.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8">Error cargando alumnos.</td></tr>';
     }
 }
 
@@ -190,6 +187,7 @@ async function deleteStudent(id) {
 
     const formData = new FormData();
     formData.append('id', id);
+    formData.append('role', 'alumno');
 
     try {
         const data = await request('backend/users/delete.php', formData);
