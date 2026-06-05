@@ -311,7 +311,6 @@ $skipped = 0;
 $errors = [];
 $rowNumber = 1;
 $previousRecordsCleared = false;
-$importedStudentRuts = [];
 
 try {
     ensure_student_guardians_table($pdo);
