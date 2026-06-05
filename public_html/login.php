@@ -10,7 +10,7 @@ if (is_logged_in()) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Backend Users PHP</title>
+    <title>Login</title>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body class="auth-body">
@@ -19,7 +19,7 @@ if (is_logged_in()) {
             <div class="brand-logo">U</div>
             <div>
                 <h1>Iniciar sesión</h1>
-                <p>Backend de usuarios con PHP puro</p>
+                <p>Sistema de registro de reuniones</p>
             </div>
         </div>
 
@@ -38,8 +38,6 @@ if (is_logged_in()) {
 
             <button type="submit" class="btn btn-primary">Entrar</button>
         </form>
-
-        <p class="muted center">¿No tienes cuenta? <a href="register.php">Crear cuenta</a></p>
         <p class="demo-box">Demo admin: <strong>admin@demo.cl</strong> / <strong>Admin12345</strong></p>
     </main>
 

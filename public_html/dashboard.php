@@ -7,17 +7,17 @@ require_login();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard | Backend Users PHP</title>
+    <title>Inicio</title>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
     <header class="topbar">
         <div class="container topbar-content">
             <div class="brand small">
-                <div class="brand-logo">U</div>
+                <div class="brand-logo">P</div>
                 <div>
                     <h1>Panel</h1>
-                    <p>PHP puro + MySQL</p>
+                    <p>Sistema de registro de reuniones</p>
                 </div>
             </div>
             <nav>
@@ -47,10 +47,6 @@ require_login();
                 <div class="stat-card">
                     <span>Rol</span>
                     <strong><?= e($_SESSION['user_role']) ?></strong>
-                </div>
-                <div class="stat-card">
-                    <span>ID usuario</span>
-                    <strong><?= e((string) $_SESSION['user_id']) ?></strong>
                 </div>
             </div>
         </section>

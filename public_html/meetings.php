@@ -8,7 +8,7 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reuniones | Backend Users PHP</title>
+    <title>Reuniones</title>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
@@ -17,13 +17,13 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
             <div class="brand small">
                 <div class="brand-logo">R</div>
                 <div>
-                    <h1>Registros de citas</h1>
+                    <h1>Reuniones</h1>
                     <p>Profesor - apoderado</p>
                 </div>
             </div>
             <nav>
                 <a href="dashboard.php">Inicio</a>
-                <a href="meetings.php">Registros de citas</a>
+                <a href="meetings.php">Reuniones</a>
                 <?php if ($isAdmin): ?>
                     <a href="users.php">Usuarios</a>
                 <?php endif; ?>
