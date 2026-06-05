@@ -214,12 +214,8 @@ uploadTeachersForm.addEventListener('submit', async (event) => {
 
     try {
         const data = await request('backend/users/upload-teachers.php', formData);
-        const errors = Array.isArray(data.errors) && data.errors.length
-            ? `\n${data.errors.join('\n')}`
-            : '';
-
         uploadResult.className = `info-box ${data.success ? 'success-text' : 'error-text'}`;
-        uploadResult.textContent = `${data.message || 'Proceso terminado.'}${errors}`;
+        uploadResult.textContent = data.message || 'Proceso terminado.';
         showAlert(data.message || 'Carga finalizada.', data.success ? 'success' : 'error');
 
         if (data.success) {
