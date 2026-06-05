@@ -452,14 +452,7 @@ try {
         }
 
         $loginRut = normalize_rut_login($rut);
-        $initialPassword = rut_password($rut);
-
-        if ($initialPassword === '') {
-            $skipped++;
-            $errors[] = "Fila {$rowNumber}: el RUT no permite generar contraseña inicial.";
-            continue;
-        }
-
+        $internalPassword = bin2hex(random_bytes(16));
         $email = rut_to_email_key($rut) . '@alumno.local';
         $userId = 0;
         $existingUser = null;
@@ -523,7 +516,7 @@ try {
     $pdo->commit();
 
     $hasImportedRows = $created > 0 || $updated > 0 || $skipped === 0;
-    $message = "Carga finalizada: {$created} creados, {$updated} actualizados, {$skipped} omitidos. Los alumnos ingresan con su RUT sin puntos ni guion y clave de los últimos 4 dígitos antes del verificador.";
+    $message = "Carga finalizada: {$created} creados, {$updated} actualizados, {$skipped} omitidos. Los alumnos quedan disponibles para reuniones, pero no tienen acceso de inicio de sesión ni perfil propio.";
 
     if (!$hasImportedRows) {
         $message = "No se importó ningún alumno: {$skipped} filas fueron omitidas. Revisa los detalles del CSV.";

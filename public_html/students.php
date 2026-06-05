@@ -96,13 +96,13 @@ require_admin();
                     </label>
 
                     <label>
-                        Correo
-                        <input type="email" name="email" id="email" required>
+                        Correo interno (opcional)
+                        <input type="email" name="email" id="email" placeholder="Se genera automáticamente si queda vacío">
                     </label>
 
                     <label>
-                        Contraseña
-                        <input type="password" name="password" id="password" placeholder="Obligatoria al crear. Opcional al editar.">
+                        Contraseña interna (opcional)
+                        <input type="password" name="password" id="password" placeholder="No habilita inicio de sesión para alumnos">
                     </label>
 
                     <label>
