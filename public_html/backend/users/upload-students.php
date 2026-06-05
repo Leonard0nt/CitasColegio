@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../includes/config-path.php';
 require_once __DIR__ . '/teacher-profile-helpers.php';
 require_once __DIR__ . '/student-profile-helpers.php';
 require_once __DIR__ . '/encoding-helpers.php';
+require_once __DIR__ . '/bulk-import-helpers.php';
 
 function normalize_header(string $header): string
 {
@@ -249,6 +250,8 @@ if (($_FILES['students_csv']['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
     echo json_encode(['success' => false, 'message' => 'No se pudo subir el archivo CSV.']);
     exit;
 }
+
+configure_bulk_import_runtime();
 
 $contents = file_get_contents($_FILES['students_csv']['tmp_name']);
 if ($contents === false || trim($contents) === '') {
@@ -490,7 +493,7 @@ try {
             $insertUser->execute([
                 ':name' => $name,
                 ':email' => $email,
-                ':password' => password_hash($internalPassword, PASSWORD_DEFAULT),
+                ':password' => bulk_import_password_hash($initialPassword),
             ]);
             $userId = (int) $pdo->lastInsertId();
             $created++;

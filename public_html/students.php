@@ -199,7 +199,7 @@ require_admin();
                     <input type="file" name="students_csv" id="students_csv" accept=".csv,text/csv" required>
                 </label>
 
-                <p class="muted small-text">Los alumnos quedan disponibles para gestionar reuniones, pero no tienen acceso para iniciar sesión ni perfil propio.</p>
+                <p class="muted small-text">El usuario de cada alumno será su RUT sin puntos ni guion. La contraseña inicial será los últimos 4 números del RUT antes del verificador; por ejemplo: 27.562.097-1 → usuario 275620971 y clave 2097.</p>
                 <p class="muted small-text">Como el archivo no trae correo del alumno, se generará un correo interno usando su RUT para crear el perfil. Si no viene apoderado, se guardará como “Apoderado no informado”.</p>
 
                 <div id="uploadResult" class="info-box hidden"></div>
