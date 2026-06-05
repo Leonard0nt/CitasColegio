@@ -158,7 +158,9 @@ function normalize_student_rut_value(string $rut): string
 
 function save_student_record(PDO $pdo, ?int $studentId, string $name, int $active, string $course, string $rut): int
 {
-    ensure_students_table($pdo);
+    if (!$pdo->inTransaction()) {
+        ensure_students_table($pdo);
+    }
 
     $name = trim($name);
     $course = trim($course);
@@ -197,7 +199,9 @@ function save_student_record(PDO $pdo, ?int $studentId, string $name, int $activ
 
 function save_student_profile(PDO $pdo, int $studentId, string $course, string $rut): void
 {
-    ensure_students_table($pdo);
+    if (!$pdo->inTransaction()) {
+        ensure_students_table($pdo);
+    }
 
     $course = trim($course);
     $rut = normalize_student_rut_value($rut);
@@ -217,7 +221,9 @@ function save_student_profile(PDO $pdo, int $studentId, string $course, string $
 
 function delete_student_profile(PDO $pdo, int $studentId): void
 {
-    ensure_students_table($pdo);
+    if (!$pdo->inTransaction()) {
+        ensure_students_table($pdo);
+    }
 
     $stmt = $pdo->prepare('DELETE FROM students WHERE id = :id');
     $stmt->execute([':id' => $studentId]);
