@@ -12,6 +12,7 @@ const closeUploadModalBtn = document.getElementById('closeUploadModalBtn');
 const cancelUploadBtn = document.getElementById('cancelUploadBtn');
 const uploadStudentsForm = document.getElementById('uploadStudentsForm');
 const uploadResult = document.getElementById('uploadResult');
+const courseFilter = document.getElementById('courseFilter');
 
 function removeVisibleIdHeader() {
     const firstHeader = tableBody
@@ -25,6 +26,7 @@ function removeVisibleIdHeader() {
 
 let editing = false;
 let studentsCache = [];
+let currentCourseFilter = '';
 
 function showAlert(message, type = 'success') {
     alertBox.textContent = message;
@@ -92,10 +94,11 @@ async function request(url, formData = null) {
 }
 
 function renderStudents(students) {
-    studentsCache = students;
-
     if (!students.length) {
-        tableBody.innerHTML = '<tr><td colspan="7">No hay alumnos registrados.</td></tr>';
+        const message = currentCourseFilter
+            ? 'No hay alumnos registrados para el curso seleccionado.'
+            : 'No hay alumnos registrados.';
+        tableBody.innerHTML = `<tr><td colspan="7">${message}</td></tr>`;
         return;
     }
 
@@ -119,6 +122,42 @@ function renderStudents(students) {
 
 function studentAttribute(student, key) {
     return student[key] ? escapeHtml(student[key]) : 'Sin dato';
+}
+
+function normalizeCourse(course) {
+    return String(course ?? '').trim();
+}
+
+function populateCourseFilter(students) {
+    const selectedCourse = currentCourseFilter;
+    const courses = [...new Set(students
+        .map(student => normalizeCourse(student.student_course))
+        .filter(Boolean))]
+        .sort((first, second) => first.localeCompare(second, 'es', { numeric: true, sensitivity: 'base' }));
+
+    courseFilter.innerHTML = '<option value="">Todos los cursos</option>';
+
+    courses.forEach(course => {
+        const option = document.createElement('option');
+        option.value = course;
+        option.textContent = course;
+        courseFilter.appendChild(option);
+    });
+
+    const courseStillExists = courses.includes(selectedCourse);
+    currentCourseFilter = courseStillExists ? selectedCourse : '';
+    courseFilter.value = currentCourseFilter;
+    courseFilter.disabled = courses.length === 0;
+}
+
+function filteredStudents() {
+    if (!currentCourseFilter) return studentsCache;
+
+    return studentsCache.filter(student => normalizeCourse(student.student_course) === currentCourseFilter);
+}
+
+function applyCourseFilter() {
+    renderStudents(filteredStudents());
 }
 
 function guardianSummary(student, backup = false) {
@@ -175,7 +214,9 @@ async function loadStudents() {
             showAlert(data.message || 'No se pudieron cargar los alumnos.', 'error');
             return;
         }
-        renderStudents(data.users);
+        studentsCache = Array.isArray(data.users) ? data.users : [];
+        populateCourseFilter(studentsCache);
+        applyCourseFilter();
     } catch (error) {
         tableBody.innerHTML = '<tr><td colspan="7">Error cargando alumnos.</td></tr>';
     }
@@ -221,6 +262,10 @@ cancelBtn.addEventListener('click', closeModal);
 openUploadBtn.addEventListener('click', openUploadModal);
 closeUploadModalBtn.addEventListener('click', closeUploadModal);
 cancelUploadBtn.addEventListener('click', closeUploadModal);
+courseFilter.addEventListener('change', () => {
+    currentCourseFilter = courseFilter.value;
+    applyCourseFilter();
+});
 
 modal.addEventListener('click', (event) => {
     if (event.target === modal) closeModal();

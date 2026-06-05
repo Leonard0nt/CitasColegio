@@ -249,6 +249,25 @@ input:focus, select:focus {
     word-break: break-word;
 }
 
+.students-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.students-toolbar label {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.students-toolbar select {
+    min-width: 220px;
+}
+
 .table-wrapper {
     overflow-x: auto;
     border: 1px solid var(--border);
