@@ -46,6 +46,13 @@ require_admin();
                 </div>
             </div>
 
+            <div class="students-toolbar" aria-label="Filtros de alumnos">
+                <label for="courseFilter">Filtrar por curso</label>
+                <select id="courseFilter" disabled>
+                    <option value="">Todos los cursos</option>
+                </select>
+            </div>
+
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -199,6 +206,6 @@ require_admin();
         </div>
     </div>
 
-    <script src="assets/js/students.js?v=20260605-id-column"></script>
+    <script src="assets/js/students.js?v=20260605-course-filter"></script>
 </body>
 </html>
