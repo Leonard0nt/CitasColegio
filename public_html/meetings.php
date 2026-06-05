@@ -52,7 +52,6 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Profesor</th>
                             <th>Alumno</th>
                             <th>Apoderado</th>
@@ -61,7 +60,7 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                         </tr>
                     </thead>
                     <tbody id="meetingsTableBody">
-                        <tr><td colspan="6">Cargando reuniones...</td></tr>
+                        <tr><td colspan="5">Cargando reuniones...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -139,6 +138,6 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
     <script>
         window.CURRENT_ROLE = <?= json_encode($_SESSION['user_role'] ?? '') ?>;
     </script>
-    <script src="assets/js/meetings.js?v=20260605-no-status"></script>
+    <script src="assets/js/meetings.js?v=20260605-auto-refresh"></script>
 </body>
 </html>

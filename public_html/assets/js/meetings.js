@@ -15,6 +15,9 @@ const notesInput = document.getElementById('notes');
 const isAdmin = window.CURRENT_ROLE === 'admin';
 
 let options = { teachers: [], students: [] };
+let isLoadingMeetings = false;
+const MEETINGS_REFRESH_INTERVAL_MS = 15000;
+const MEETINGS_REFRESH_EVENT_KEY = 'meetings:last-change';
 
 function showAlert(message, type = 'success') {
     alertBox.textContent = message;
@@ -156,25 +159,31 @@ function updateGuardianAvailability() {
     }
 }
 
-async function loadMeetings() {
-    tableBody.innerHTML = '<tr><td colspan="6">Cargando reuniones...</td></tr>';
+async function loadMeetings(showLoading = true) {
+    if (isLoadingMeetings) return;
 
-    const res = await fetch('backend/meetings/list.php');
-    const data = await res.json();
+    isLoadingMeetings = true;
 
-    if (!data.success) {
-        tableBody.innerHTML = '<tr><td colspan="6">Error al cargar reuniones.</td></tr>';
-        return;
+    if (showLoading) {
+        tableBody.innerHTML = '<tr><td colspan="5">Cargando reuniones...</td></tr>';
     }
 
-    if (!data.meetings.length) {
-        tableBody.innerHTML = '<tr><td colspan="6">No hay reuniones agendadas.</td></tr>';
-        return;
-    }
+    try {
+        const res = await fetch('backend/meetings/list.php', { cache: 'no-store' });
+        const data = await res.json();
 
-    tableBody.innerHTML = data.meetings.map(m => `
+        if (!data.success) {
+            tableBody.innerHTML = '<tr><td colspan="5">Error al cargar reuniones.</td></tr>';
+            return;
+        }
+
+        if (!data.meetings.length) {
+            tableBody.innerHTML = '<tr><td colspan="5">No hay reuniones agendadas.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = data.meetings.map(m => `
         <tr>
-            <td>${m.id}</td>
             <td>${escapeHtml(m.teacher_name)}</td>
             <td>${escapeHtml(m.student_name)}</td>
             <td>
@@ -187,6 +196,19 @@ async function loadMeetings() {
             <td>${escapeHtml(formatTime(m.meeting_time))}</td>
         </tr>
     `).join('');
+    } catch (error) {
+        tableBody.innerHTML = '<tr><td colspan="5">Error al cargar reuniones.</td></tr>';
+    } finally {
+        isLoadingMeetings = false;
+    }
+}
+
+function notifyMeetingsChanged() {
+    try {
+        localStorage.setItem(MEETINGS_REFRESH_EVENT_KEY, String(Date.now()));
+    } catch (error) {
+        // La recarga local ya se realizó; esta notificación solo sincroniza otras pestañas.
+    }
 }
 
 function openModal() {
@@ -217,7 +239,8 @@ form?.addEventListener('submit', async (e) => {
 
     if (data.success) {
         closeModal();
-        await loadMeetings();
+        await loadMeetings(false);
+        notifyMeetingsChanged();
     }
 });
 
@@ -227,4 +250,12 @@ if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 if (courseSelect) courseSelect.addEventListener('change', populateStudentSelect);
 if (studentSelect) studentSelect.addEventListener('change', updateGuardianAvailability);
 
-loadOptions().then(loadMeetings);
+window.addEventListener('storage', (event) => {
+    if (event.key === MEETINGS_REFRESH_EVENT_KEY) {
+        loadMeetings(false);
+    }
+});
+
+setInterval(() => loadMeetings(false), MEETINGS_REFRESH_INTERVAL_MS);
+
+loadOptions().then(() => loadMeetings());
