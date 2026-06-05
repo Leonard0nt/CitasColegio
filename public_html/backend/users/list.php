@@ -15,7 +15,6 @@ require_once __DIR__ . '/student-profile-helpers.php';
 require_once __DIR__ . '/encoding-helpers.php';
 
 ensure_teacher_profiles_table($pdo);
-ensure_students_table($pdo);
 
 $role = $_GET['role'] ?? '';
 $allowedRoles = ['admin', 'profesor', 'alumno'];
@@ -26,6 +25,8 @@ if ($role !== '' && !in_array($role, $allowedRoles, true)) {
 }
 
 if ($role === 'alumno') {
+    ensure_student_guardians_table($pdo);
+
     $stmt = $pdo->query("
         SELECT
             s.id,
@@ -54,12 +55,22 @@ if ($role === 'alumno') {
             sg.backup_guardian_email,
             sg.backup_guardian_relationship
         FROM students s
-        LEFT JOIN student_guardians sg ON sg.student_id = s.id
+        LEFT JOIN (
+            SELECT sg.*
+            FROM student_guardians sg
+            INNER JOIN (
+                SELECT student_id, MAX(id) AS id
+                FROM student_guardians
+                GROUP BY student_id
+            ) latest_sg ON latest_sg.id = sg.id
+        ) sg ON sg.student_id = s.id
         ORDER BY s.id DESC
     ");
 
     $users = $stmt->fetchAll();
 } else {
+    ensure_students_table($pdo);
+
     $whereSql = '';
     $params = [];
 

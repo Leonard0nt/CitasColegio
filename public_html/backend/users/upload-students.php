@@ -469,6 +469,14 @@ try {
         }
 
         $loginRut = normalize_rut_login($rut);
+
+        if (isset($importedStudentRuts[$loginRut])) {
+            $skipped++;
+            $errors[] = "Fila {$rowNumber}: RUT duplicado en el CSV; se omitió para evitar duplicados.";
+            continue;
+        }
+
+        $importedStudentRuts[$loginRut] = true;
         $studentId = 0;
         $existingUser = null;
         $findByRut->execute([':rut' => $loginRut]);

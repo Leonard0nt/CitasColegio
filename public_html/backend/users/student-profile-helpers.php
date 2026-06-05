@@ -58,6 +58,32 @@ function ensure_student_guardians_table(PDO $pdo): void
 SQL);
 
     migrate_legacy_student_guardians_fk($pdo);
+    ensure_unique_student_guardians($pdo);
+}
+
+function ensure_unique_student_guardians(PDO $pdo): void
+{
+    $pdo->exec(<<<SQL
+        DELETE sg_old
+        FROM student_guardians sg_old
+        INNER JOIN student_guardians sg_new
+            ON sg_new.student_id = sg_old.student_id
+           AND sg_new.id > sg_old.id
+SQL);
+
+    $stmt = $pdo->prepare(<<<SQL
+        SELECT COUNT(DISTINCT index_name)
+        FROM information_schema.STATISTICS
+        WHERE table_schema = DATABASE()
+          AND table_name = 'student_guardians'
+          AND column_name = 'student_id'
+          AND non_unique = 0
+SQL);
+    $stmt->execute();
+
+    if ((int) $stmt->fetchColumn() === 0) {
+        $pdo->exec('ALTER TABLE student_guardians ADD UNIQUE KEY unique_student_guardian_student_id (student_id)');
+    }
 }
 
 function migrate_legacy_student_guardians_fk(PDO $pdo): void
