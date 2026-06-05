@@ -12,6 +12,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 require_once __DIR__ . '/../../includes/config-path.php';
 require_once __DIR__ . '/teacher-profile-helpers.php';
 require_once __DIR__ . '/encoding-helpers.php';
+require_once __DIR__ . '/bulk-import-helpers.php';
 
 function csv_value(array $row, array $aliases): string
 {
@@ -176,6 +177,8 @@ if (($_FILES['teachers_csv']['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
     echo json_encode(['success' => false, 'message' => 'No se pudo subir el archivo CSV.']);
     exit;
 }
+
+configure_bulk_import_runtime();
 
 $contents = file_get_contents($_FILES['teachers_csv']['tmp_name']);
 if ($contents === false || trim($contents) === '') {
@@ -367,7 +370,7 @@ try {
             $insertUser->execute([
                 ':name' => $name,
                 ':email' => $email,
-                ':password' => password_hash($initialPassword, PASSWORD_DEFAULT),
+                ':password' => bulk_import_password_hash($initialPassword),
             ]);
             $userId = (int) $pdo->lastInsertId();
             $created++;
