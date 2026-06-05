@@ -14,7 +14,22 @@ require_once __DIR__ . '/teacher-profile-helpers.php';
 
 ensure_teacher_profiles_table($pdo);
 
-$stmt = $pdo->query("
+$role = $_GET['role'] ?? '';
+$allowedRoles = ['admin', 'profesor', 'alumno'];
+$whereSql = '';
+$params = [];
+
+if ($role !== '') {
+    if (!in_array($role, $allowedRoles, true)) {
+        echo json_encode(['success' => false, 'message' => 'Rol inválido.']);
+        exit;
+    }
+
+    $whereSql = 'WHERE u.role = :role';
+    $params[':role'] = $role;
+}
+
+$stmt = $pdo->prepare("
     SELECT
         u.id,
         u.name,
@@ -41,9 +56,11 @@ $stmt = $pdo->query("
     FROM users u
     LEFT JOIN student_guardians sg ON sg.student_id = u.id
     LEFT JOIN teacher_profiles tp ON tp.user_id = u.id
+    $whereSql
     ORDER BY u.id DESC
 ");
 
+$stmt->execute($params);
 $users = $stmt->fetchAll();
 
 echo json_encode(['success' => true, 'users' => $users]);

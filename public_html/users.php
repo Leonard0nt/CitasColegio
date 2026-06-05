@@ -7,23 +7,24 @@ require_admin();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Usuarios</title>
+    <title>Profesores</title>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
     <header class="topbar">
         <div class="container topbar-content">
             <div class="brand small">
-                <div class="brand-logo">U</div>
+                <div class="brand-logo">P</div>
                 <div>
-                    <h1>Usuarios</h1>
-                    <p>Administración</p>
+                    <h1>Profesores</h1>
+                    <p>Administración docente</p>
                 </div>
             </div>
             <nav>
                 <a href="dashboard.php">Inicio</a>
                 <a href="meetings.php">Reuniones</a>
-                <a href="users.php">Usuarios</a>
+                <a href="users.php">Profesores</a>
+                <a href="students.php">Alumnos</a>
                 <a href="profile.php">Perfil</a>
                 <a class="btn btn-danger" href="backend/auth/logout.php">Salir</a>
             </nav>
@@ -36,12 +37,12 @@ require_admin();
         <section class="panel">
             <div class="section-header">
                 <div>
-                    <h2>Gestión de usuarios</h2>
-                    <p>Crea administradores, profesores y alumnos con apoderado titular y suplente.</p>
+                    <h2>Gestión de profesores</h2>
+                    <p>Administra los datos de acceso y atributos docentes de cada profesor.</p>
                 </div>
                 <div class="section-actions">
                     <button class="btn" id="openUploadBtn">Subir profesores CSV</button>
-                    <button class="btn btn-primary" id="openCreateBtn">Nuevo usuario</button>
+                    <button class="btn btn-primary" id="openCreateBtn">Nuevo profesor</button>
                 </div>
             </div>
 
@@ -52,18 +53,15 @@ require_admin();
                             <th>ID</th>
                             <th>Nombre</th>
                             <th>Correo</th>
-                            <th>Rol</th>
                             <th>Estado</th>
                             <th>RUT profesor</th>
                             <th>Centro costo</th>
                             <th>Móvil</th>
-                            <th>Apoderado</th>
-                            <th>Apoderado suplente</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
-                        <tr><td colspan="11">Cargando usuarios...</td></tr>
+                        <tr><td colspan="8">Cargando profesores...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -73,7 +71,7 @@ require_admin();
     <div class="modal hidden" id="userModal">
         <div class="modal-card modal-card-wide">
             <div class="section-header">
-                <h2 id="modalTitle">Nuevo usuario</h2>
+                <h2 id="modalTitle">Nuevo profesor</h2>
                 <button class="icon-btn" id="closeModalBtn">×</button>
             </div>
 
@@ -97,15 +95,6 @@ require_admin();
                     </label>
 
                     <label>
-                        Rol
-                        <select name="role" id="role" required>
-                            <option value="admin">Administrador</option>
-                            <option value="profesor">Profesor</option>
-                            <option value="alumno">Alumno</option>
-                        </select>
-                    </label>
-
-                    <label>
                         Estado
                         <select name="active" id="active">
                             <option value="1">Activo</option>
@@ -114,7 +103,7 @@ require_admin();
                     </label>
                 </div>
 
-                <div id="teacherFields" class="guardian-box hidden">
+                <div class="guardian-box">
                     <h3>Atributos del profesor</h3>
 
                     <div class="form-grid">
@@ -131,66 +120,6 @@ require_admin();
                         <label>
                             Móvil
                             <input type="text" name="teacher_phone" id="teacher_phone" placeholder="56912345678">
-                        </label>
-                    </div>
-                </div>
-
-                <div id="guardianFields" class="guardian-box hidden">
-                    <h3>Datos del apoderado titular</h3>
-
-                    <div class="form-grid">
-                        <label>
-                            Nombre apoderado
-                            <input type="text" name="guardian_name" id="guardian_name">
-                        </label>
-
-                        <label>
-                            RUT apoderado
-                            <input type="text" name="guardian_rut" id="guardian_rut" placeholder="12.345.678-9">
-                        </label>
-
-                        <label>
-                            Teléfono apoderado
-                            <input type="text" name="guardian_phone" id="guardian_phone" placeholder="+56 9 1234 5678">
-                        </label>
-
-                        <label>
-                            Correo apoderado
-                            <input type="email" name="guardian_email" id="guardian_email" placeholder="apoderado@dominio.cl">
-                        </label>
-
-                        <label>
-                            Parentesco
-                            <input type="text" name="guardian_relationship" id="guardian_relationship" placeholder="Madre, padre, tío, etc.">
-                        </label>
-                    </div>
-
-                    <h3>Datos del apoderado suplente</h3>
-
-                    <div class="form-grid">
-                        <label>
-                            Nombre suplente
-                            <input type="text" name="backup_guardian_name" id="backup_guardian_name">
-                        </label>
-
-                        <label>
-                            RUT suplente
-                            <input type="text" name="backup_guardian_rut" id="backup_guardian_rut" placeholder="12.345.678-9">
-                        </label>
-
-                        <label>
-                            Teléfono suplente
-                            <input type="text" name="backup_guardian_phone" id="backup_guardian_phone" placeholder="+56 9 1234 5678">
-                        </label>
-
-                        <label>
-                            Correo suplente
-                            <input type="email" name="backup_guardian_email" id="backup_guardian_email" placeholder="suplente@dominio.cl">
-                        </label>
-
-                        <label>
-                            Parentesco suplente
-                            <input type="text" name="backup_guardian_relationship" id="backup_guardian_relationship" placeholder="Abuela, hermano, vecino, etc.">
                         </label>
                     </div>
                 </div>
