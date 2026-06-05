@@ -455,3 +455,12 @@ textarea {
     color: #991b1b;
     white-space: pre-line;
 }
+
+.upload-errors {
+    margin: 0.75rem 0 0;
+    padding-left: 1.25rem;
+}
+
+.upload-errors li + li {
+    margin-top: 0.25rem;
+}

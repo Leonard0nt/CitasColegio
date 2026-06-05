@@ -11,6 +11,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 
 require_once __DIR__ . '/../../includes/config-path.php';
 require_once __DIR__ . '/teacher-profile-helpers.php';
+require_once __DIR__ . '/student-profile-helpers.php';
 
 $id = (int) ($_POST['id'] ?? 0);
 $name = trim($_POST['name'] ?? '');
@@ -36,6 +37,7 @@ if (!in_array($role, ['admin', 'profesor', 'alumno'], true)) {
 
 try {
     ensure_teacher_profiles_table($pdo);
+    ensure_student_profiles_table($pdo);
 
     $pdo->beginTransaction();
 
@@ -89,6 +91,13 @@ try {
     }
 
     if ($role === 'alumno') {
+        save_student_profile(
+            $pdo,
+            $id,
+            $_POST['student_course'] ?? '',
+            $_POST['student_rut'] ?? ''
+        );
+
         $guardianName = trim($_POST['guardian_name'] ?? '');
 
         if ($guardianName === '') {
@@ -150,6 +159,8 @@ try {
             ':backup_guardian_relationship' => trim($_POST['backup_guardian_relationship'] ?? ''),
         ]);
     } else {
+        delete_student_profile($pdo, $id);
+
         $stmtDeleteGuardian = $pdo->prepare('DELETE FROM student_guardians WHERE student_id = :student_id');
         $stmtDeleteGuardian->execute([':student_id' => $id]);
     }
