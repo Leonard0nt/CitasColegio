@@ -241,6 +241,28 @@ function row_values_changed(array $current, array $incoming): bool
     return false;
 }
 
+function database_table_exists(PDO $pdo, string $tableName): bool
+{
+    $stmt = $pdo->prepare(<<<SQL
+        SELECT COUNT(*)
+        FROM information_schema.TABLES
+        WHERE table_schema = DATABASE()
+          AND table_name = :table_name
+SQL);
+    $stmt->execute([':table_name' => $tableName]);
+
+    return (int) $stmt->fetchColumn() > 0;
+}
+
+function clear_previous_student_import_records(PDO $pdo): void
+{
+    foreach (['meetings', 'student_guardians', 'students', 'student_profiles'] as $tableName) {
+        if (database_table_exists($pdo, $tableName)) {
+            $pdo->exec('DELETE FROM `' . $tableName . '`');
+        }
+    }
+}
+
 if (!isset($_FILES['students_csv']) || !is_uploaded_file($_FILES['students_csv']['tmp_name'])) {
     echo json_encode(['success' => false, 'message' => 'Debes seleccionar un archivo CSV.']);
     exit;
@@ -288,6 +310,7 @@ $updated = 0;
 $skipped = 0;
 $errors = [];
 $rowNumber = 1;
+$previousRecordsCleared = false;
 
 try {
     ensure_student_guardians_table($pdo);
@@ -438,6 +461,11 @@ try {
 
         if ($backupEmail !== '' && !filter_var($backupEmail, FILTER_VALIDATE_EMAIL)) {
             $backupEmail = '';
+        }
+
+        if (!$previousRecordsCleared) {
+            clear_previous_student_import_records($pdo);
+            $previousRecordsCleared = true;
         }
 
         $loginRut = normalize_rut_login($rut);
