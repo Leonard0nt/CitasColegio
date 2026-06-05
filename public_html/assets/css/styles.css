@@ -295,6 +295,11 @@ tr:last-child td { border-bottom: 0; }
     flex-wrap: wrap;
 }
 
+.actions .btn-small {
+    min-width: 72px;
+    justify-content: center;
+}
+
 .modal {
     position: fixed;
     inset: 0;
