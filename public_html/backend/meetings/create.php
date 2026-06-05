@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['ad
 }
 
 require_once __DIR__ . '/../../includes/config-path.php';
+require_once __DIR__ . '/schema-helpers.php';
 
 $loggedRole = $_SESSION['user_role'] ?? '';
 $loggedUserId = (int) ($_SESSION['user_id'] ?? 0);
@@ -33,6 +34,8 @@ if (!in_array($guardianType, ['titular', 'suplente'], true)) {
 }
 
 try {
+    ensure_meetings_student_foreign_key($pdo);
+
     $stmtTeacher = $pdo->prepare("SELECT id FROM users WHERE id = :id AND role = 'profesor' AND active = 1 LIMIT 1");
     $stmtTeacher->execute([':id' => $teacherId]);
     if (!$stmtTeacher->fetch()) {
@@ -84,20 +87,40 @@ try {
     }
 
     $stmtConflict = $pdo->prepare(
-        'SELECT id FROM meetings WHERE teacher_id = :teacher_id AND meeting_date = :meeting_date AND meeting_time = :meeting_time LIMIT 1'
+        "
+        SELECT
+            m.id,
+            t.id AS current_teacher_id,
+            s.id AS current_student_id
+        FROM meetings m
+        LEFT JOIN users t ON t.id = m.teacher_id
+        LEFT JOIN students s ON s.id = m.student_id
+        WHERE m.teacher_id = :teacher_id
+          AND m.meeting_date = :meeting_date
+          AND m.meeting_time = :meeting_time
+        LIMIT 1
+        "
     );
     $stmtConflict->execute([
         ':teacher_id' => $teacherId,
         ':meeting_date' => $meetingDate,
         ':meeting_time' => $meetingTime,
     ]);
+    $conflict = $stmtConflict->fetch();
 
-    if ($stmtConflict->fetch()) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Ya existe una reunión para este profesor en la misma fecha y hora.',
-        ]);
-        exit;
+    if ($conflict) {
+        $hasMissingReference = empty($conflict['current_teacher_id']) || empty($conflict['current_student_id']);
+
+        if ($hasMissingReference) {
+            $stmtDeleteStale = $pdo->prepare('DELETE FROM meetings WHERE id = :id LIMIT 1');
+            $stmtDeleteStale->execute([':id' => (int) $conflict['id']]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Ya existe una reunión para este profesor en la misma fecha y hora.',
+            ]);
+            exit;
+        }
     }
 
     $stmt = $pdo->prepare("
@@ -124,10 +147,20 @@ try {
 
     echo json_encode(['success' => true, 'message' => 'Reunión agendada correctamente.']);
 } catch (PDOException $e) {
-    if ((string) $e->getCode() === '23000') {
+    $driverErrorCode = (int) ($e->errorInfo[1] ?? 0);
+
+    if ((string) $e->getCode() === '23000' && $driverErrorCode === 1062) {
         echo json_encode([
             'success' => false,
             'message' => 'No se puede agendar: ya existe una reunión para este profesor en la misma fecha y hora.',
+        ]);
+        exit;
+    }
+
+    if ((string) $e->getCode() === '23000' && in_array($driverErrorCode, [1451, 1452], true)) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'No se puede agendar: revisa que el profesor y el alumno seleccionados sigan existiendo.',
         ]);
         exit;
     }
