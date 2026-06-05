@@ -40,7 +40,10 @@ require_admin();
                     <h2>Gestión de alumnos</h2>
                     <p>Crea y administra alumnos con apoderado titular y apoderado suplente.</p>
                 </div>
-                <button class="btn btn-primary" id="openCreateBtn">Nuevo alumno</button>
+                <div class="section-actions">
+                    <button class="btn" id="openUploadBtn">Subir alumnos CSV</button>
+                    <button class="btn btn-primary" id="openCreateBtn">Nuevo alumno</button>
+                </div>
             </div>
 
             <div class="table-wrapper">
@@ -49,6 +52,8 @@ require_admin();
                         <tr>
                             <th>ID</th>
                             <th>Nombre</th>
+                            <th>Curso</th>
+                            <th>RUT alumno</th>
                             <th>Correo</th>
                             <th>Estado</th>
                             <th>Apoderado titular</th>
@@ -57,7 +62,7 @@ require_admin();
                         </tr>
                     </thead>
                     <tbody id="studentsTableBody">
-                        <tr><td colspan="7">Cargando alumnos...</td></tr>
+                        <tr><td colspan="9">Cargando alumnos...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -78,6 +83,16 @@ require_admin();
                     <label>
                         Nombre
                         <input type="text" name="name" id="name" required>
+                    </label>
+
+                    <label>
+                        Curso
+                        <input type="text" name="student_course" id="student_course" placeholder="Prekinder A">
+                    </label>
+
+                    <label>
+                        RUT alumno
+                        <input type="text" name="student_rut" id="student_rut" placeholder="27.562.097-1">
                     </label>
 
                     <label>
@@ -162,6 +177,36 @@ require_admin();
                 <div class="modal-actions">
                     <button type="button" class="btn" id="cancelBtn">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div class="modal hidden" id="uploadModal">
+        <div class="modal-card">
+            <div class="section-header">
+                <div>
+                    <h2>Subir alumnos CSV</h2>
+                    <p>Usa columnas: Nombre Curso, Número Rut, Nombre Alumno, Nombre Apoderado, Email/Móvil Apoderado y Nombre/Email/Móvil Suplente.</p>
+                </div>
+                <button class="icon-btn" id="closeUploadModalBtn">×</button>
+            </div>
+
+            <form id="uploadStudentsForm" class="form">
+                <label>
+                    Archivo CSV
+                    <input type="file" name="students_csv" id="students_csv" accept=".csv,text/csv" required>
+                </label>
+
+                <p class="muted small-text">El usuario de cada alumno será su RUT sin puntos ni guion. La contraseña inicial será los últimos 4 números del RUT antes del verificador; por ejemplo: 27.562.097-1 → usuario 275620971 y clave 2097.</p>
+                <p class="muted small-text">Como el archivo no trae correo del alumno, se generará un correo interno usando su RUT para crear el perfil.</p>
+
+                <div id="uploadResult" class="info-box hidden"></div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn" id="cancelUploadBtn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Subir</button>
                 </div>
             </form>
         </div>

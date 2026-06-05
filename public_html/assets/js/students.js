@@ -6,6 +6,12 @@ const studentForm = document.getElementById('studentForm');
 const openCreateBtn = document.getElementById('openCreateBtn');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const cancelBtn = document.getElementById('cancelBtn');
+const uploadModal = document.getElementById('uploadModal');
+const openUploadBtn = document.getElementById('openUploadBtn');
+const closeUploadModalBtn = document.getElementById('closeUploadModalBtn');
+const cancelUploadBtn = document.getElementById('cancelUploadBtn');
+const uploadStudentsForm = document.getElementById('uploadStudentsForm');
+const uploadResult = document.getElementById('uploadResult');
 
 let editing = false;
 let studentsCache = [];
@@ -30,12 +36,27 @@ function closeModal() {
     editing = false;
 }
 
+function openUploadModal() {
+    uploadResult.className = 'info-box hidden';
+    uploadResult.textContent = '';
+    uploadStudentsForm.reset();
+    uploadModal.classList.remove('hidden');
+}
+
+function closeUploadModal() {
+    uploadModal.classList.add('hidden');
+    uploadStudentsForm.reset();
+    uploadResult.className = 'info-box hidden';
+}
+
 function setFormStudent(student) {
     document.getElementById('studentId').value = student.id || '';
     document.getElementById('name').value = student.name || '';
     document.getElementById('email').value = student.email || '';
     document.getElementById('active').value = String(student.active ?? 1);
     document.getElementById('password').value = '';
+    document.getElementById('student_course').value = student.student_course || '';
+    document.getElementById('student_rut').value = student.student_rut || '';
 
     document.getElementById('guardian_name').value = student.guardian_name || '';
     document.getElementById('guardian_rut').value = student.guardian_rut || '';
@@ -66,7 +87,7 @@ function renderStudents(students) {
     studentsCache = students;
 
     if (!students.length) {
-        tableBody.innerHTML = '<tr><td colspan="7">No hay alumnos registrados.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="9">No hay alumnos registrados.</td></tr>';
         return;
     }
 
@@ -74,6 +95,8 @@ function renderStudents(students) {
         <tr>
             <td>${student.id}</td>
             <td>${escapeHtml(student.name)}</td>
+            <td>${studentAttribute(student, 'student_course')}</td>
+            <td>${studentAttribute(student, 'student_rut')}</td>
             <td>${escapeHtml(student.email)}</td>
             <td><span class="badge ${Number(student.active) === 1 ? 'active' : 'inactive'}">${Number(student.active) === 1 ? 'Activo' : 'Inactivo'}</span></td>
             <td>${guardianSummary(student, false)}</td>
@@ -86,6 +109,10 @@ function renderStudents(students) {
             </td>
         </tr>
     `).join('');
+}
+
+function studentAttribute(student, key) {
+    return student[key] ? escapeHtml(student[key]) : 'Sin dato';
 }
 
 function guardianSummary(student, backup = false) {
@@ -124,7 +151,7 @@ async function loadStudents() {
         }
         renderStudents(data.users);
     } catch (error) {
-        tableBody.innerHTML = '<tr><td colspan="7">Error cargando alumnos.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="9">Error cargando alumnos.</td></tr>';
     }
 }
 
@@ -164,9 +191,16 @@ openCreateBtn.addEventListener('click', () => {
 
 closeModalBtn.addEventListener('click', closeModal);
 cancelBtn.addEventListener('click', closeModal);
+openUploadBtn.addEventListener('click', openUploadModal);
+closeUploadModalBtn.addEventListener('click', closeUploadModal);
+cancelUploadBtn.addEventListener('click', closeUploadModal);
 
 modal.addEventListener('click', (event) => {
     if (event.target === modal) closeModal();
+});
+
+uploadModal.addEventListener('click', (event) => {
+    if (event.target === uploadModal) closeUploadModal();
 });
 
 tableBody.addEventListener('click', (event) => {
@@ -196,6 +230,34 @@ studentForm.addEventListener('submit', async (event) => {
         }
     } catch (error) {
         showAlert('Error al guardar alumno.', 'error');
+    }
+});
+
+
+uploadStudentsForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const submitButton = uploadStudentsForm.querySelector('button[type="submit"]');
+    const formData = new FormData(uploadStudentsForm);
+    submitButton.disabled = true;
+    uploadResult.className = 'info-box';
+    uploadResult.textContent = 'Procesando CSV...';
+
+    try {
+        const data = await request('backend/users/upload-students.php', formData);
+        uploadResult.className = `info-box ${data.success ? 'success-text' : 'error-text'}`;
+        uploadResult.textContent = data.message || 'Proceso terminado.';
+        showAlert(data.message || 'Carga finalizada.', data.success ? 'success' : 'error');
+
+        if (data.success) {
+            loadStudents();
+        }
+    } catch (error) {
+        uploadResult.className = 'info-box error-text';
+        uploadResult.textContent = 'Error al subir alumnos.';
+        showAlert('Error al subir alumnos.', 'error');
+    } finally {
+        submitButton.disabled = false;
     }
 });
 
