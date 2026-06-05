@@ -142,6 +142,26 @@ function escapeHtml(value) {
         .replaceAll("'", '&#039;');
 }
 
+
+function renderUploadResult(data) {
+    uploadResult.textContent = data.message || 'Proceso terminado.';
+
+    if (!Array.isArray(data.errors) || data.errors.length === 0) {
+        return;
+    }
+
+    const errorsList = document.createElement('ul');
+    errorsList.className = 'upload-errors';
+
+    data.errors.forEach((error) => {
+        const item = document.createElement('li');
+        item.textContent = error;
+        errorsList.appendChild(item);
+    });
+
+    uploadResult.appendChild(errorsList);
+}
+
 async function loadStudents() {
     try {
         const data = await request('backend/users/list.php?role=alumno');
@@ -246,7 +266,7 @@ uploadStudentsForm.addEventListener('submit', async (event) => {
     try {
         const data = await request('backend/users/upload-students.php', formData);
         uploadResult.className = `info-box ${data.success ? 'success-text' : 'error-text'}`;
-        uploadResult.textContent = data.message || 'Proceso terminado.';
+        renderUploadResult(data);
         showAlert(data.message || 'Carga finalizada.', data.success ? 'success' : 'error');
 
         if (data.success) {
