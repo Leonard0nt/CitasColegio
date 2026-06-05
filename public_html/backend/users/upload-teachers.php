@@ -23,6 +23,52 @@ function csv_value(array $row, array $aliases): string
     return '';
 }
 
+function csv_phone_value(array $row): string
+{
+    $aliases = [
+        'movil',
+        'm_vil',
+        'mobile',
+        'telefono',
+        'fono',
+        'celular',
+        'numero',
+        'numero_telefono',
+        'numero_de_telefono',
+        'telefono_movil',
+        'telefono_celular',
+        'movil_numero',
+        'numero_movil',
+        'numero_celular',
+        'n_movil',
+        'no_movil',
+        'nro_movil',
+        'n_celular',
+        'no_celular',
+        'nro_celular',
+    ];
+
+    $phone = csv_value($row, $aliases);
+    if ($phone !== '') {
+        return $phone;
+    }
+
+    foreach ($row as $header => $value) {
+        $normalizedHeader = normalize_header((string) $header);
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            continue;
+        }
+
+        if (preg_match('/(^|_)(movil|mobile|celular|telefono|fono)($|_)/', $normalizedHeader) === 1) {
+            return $value;
+        }
+    }
+
+    return '';
+}
+
 function row_values_changed(array $current, array $incoming): bool
 {
     foreach ($incoming as $key => $value) {
@@ -213,7 +259,7 @@ try {
         $email = strtolower(csv_value($row, ['email', 'correo', 'e_mail']));
         $rut = csv_value($row, ['rut', 'run']);
         $costCenter = csv_value($row, ['centro_costo', 'centro_de_costo', 'centro_costos', 'centro_de_costos', 'centro_coste', 'ceco']);
-        $phone = csv_value($row, ['movil', 'm_vil', 'mobile', 'telefono', 'fono', 'celular', 'numero', 'numero_telefono', 'numero_de_telefono', 'telefono_movil', 'telefono_celular']);
+        $phone = csv_phone_value($row);
 
         if ($name === '') {
             $skipped++;

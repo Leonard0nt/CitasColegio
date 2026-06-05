@@ -17,6 +17,17 @@ function ensure_teacher_profiles_table(PDO $pdo): void
         UNIQUE KEY unique_teacher_profile_user (user_id),
         UNIQUE KEY unique_teacher_profile_rut (rut)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    ensure_teacher_profiles_phone_column($pdo);
+}
+
+function ensure_teacher_profiles_phone_column(PDO $pdo): void
+{
+    $stmt = $pdo->query("SHOW COLUMNS FROM teacher_profiles LIKE 'phone'");
+
+    if ($stmt->fetch() === false) {
+        $pdo->exec("ALTER TABLE teacher_profiles ADD COLUMN phone VARCHAR(30) NULL AFTER rut");
+    }
 }
 
 function normalize_teacher_profile_value(?string $value): ?string
