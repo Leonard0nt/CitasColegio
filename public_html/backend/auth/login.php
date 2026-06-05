@@ -4,8 +4,10 @@ session_start();
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../../includes/config-path.php';
 require_once __DIR__ . '/../users/teacher-profile-helpers.php';
+require_once __DIR__ . '/../users/student-profile-helpers.php';
 
 ensure_teacher_profiles_table($pdo);
+ensure_student_profiles_table($pdo);
 
 $identifier = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
@@ -21,8 +23,10 @@ $stmt = $pdo->prepare("
     SELECT u.id, u.name, u.email, u.password, u.role, u.active
     FROM users u
     LEFT JOIN teacher_profiles tp ON tp.user_id = u.id
+    LEFT JOIN student_profiles sp ON sp.user_id = u.id
     WHERE u.email = :identifier
         OR LOWER(REPLACE(REPLACE(REPLACE(tp.rut, '.', ''), '-', ''), ' ', '')) = :rut
+        OR LOWER(REPLACE(REPLACE(REPLACE(sp.rut, '.', ''), '-', ''), ' ', '')) = :rut
     LIMIT 1
 ");
 $stmt->execute([
