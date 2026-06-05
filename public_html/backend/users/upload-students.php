@@ -51,99 +51,6 @@ function csv_value(array $row, array $aliases): string
     return '';
 }
 
-function photo_student_csv_columns(): array
-{
-    return [
-        'course' => [
-            'label' => 'Nombre Curso',
-            'aliases' => ['nombre_curso'],
-            'required' => true,
-        ],
-        'rut' => [
-            'label' => 'Número Rut',
-            'aliases' => ['numero_rut'],
-            'required' => true,
-        ],
-        'name' => [
-            'label' => 'Nombre Completo Alumno',
-            'aliases' => ['nombre_completo_alumno'],
-            'required' => true,
-        ],
-        'guardian_name' => [
-            'label' => 'Nombre Apoderado',
-            'aliases' => ['nombre_apoderado'],
-            'required' => true,
-        ],
-        'guardian_email' => [
-            'label' => 'Email Apoderado',
-            'aliases' => ['email_apoderado'],
-            'required' => false,
-        ],
-        'guardian_phone' => [
-            'label' => 'Móvil Apoderado',
-            'aliases' => ['movil_apoderado', 'm_vil_apoderado'],
-            'required' => false,
-        ],
-        'backup_name' => [
-            'label' => 'Nombre Apoderado Suplente',
-            'aliases' => ['nombre_apoderado_suplente'],
-            'required' => false,
-        ],
-        'backup_email' => [
-            'label' => 'Email Apoderado Suplente',
-            'aliases' => ['email_apoderado_suplente'],
-            'required' => false,
-        ],
-        'backup_phone' => [
-            'label' => 'Móvil Apoderado Suplente',
-            'aliases' => ['movil_apoderado_suplente', 'm_vil_apoderado_suplente'],
-            'required' => false,
-        ],
-    ];
-}
-
-function csv_photo_value(array $row, string $column): string
-{
-    $columns = photo_student_csv_columns();
-    return csv_value($row, $columns[$column]['aliases'] ?? []);
-}
-
-function normalize_student_csv_headers(array $headers): array
-{
-    $normalizedHeaders = array_map('normalize_header', $headers);
-
-    if (($normalizedHeaders[0] ?? '') === '' && ($normalizedHeaders[1] ?? '') === 'numero_rut') {
-        $normalizedHeaders[0] = 'nombre_curso';
-    }
-
-    return $normalizedHeaders;
-}
-
-function missing_required_csv_columns(array $normalizedHeaders): array
-{
-    $missing = [];
-
-    foreach (photo_student_csv_columns() as $column) {
-        if (!($column['required'] ?? false)) {
-            continue;
-        }
-
-        if (count(array_intersect($column['aliases'], $normalizedHeaders)) === 0) {
-            $missing[] = $column['label'];
-        }
-    }
-
-    return $missing;
-}
-
-function expected_csv_header_text(): string
-{
-    return implode(', ', array_map(
-        static fn(array $column): string => $column['label'],
-        photo_student_csv_columns()
-    ));
-}
-
 function csv_student_name_value(array $row): string
 {
     $name = csv_value($row, [
@@ -154,7 +61,6 @@ function csv_student_name_value(array $row): string
         'nombre_completo_estudiante',
         'alumno',
         'estudiante',
-        'nombre_completo',
         'nombre',
     ]);
 
@@ -216,29 +122,6 @@ function row_values_changed(array $current, array $incoming): bool
     return false;
 }
 
-function skip_student_row(int $rowNumber, string $reason, int &$skipped, array &$errors, array &$skipReasons): void
-{
-    $skipped++;
-    $skipReasons[$reason] = ($skipReasons[$reason] ?? 0) + 1;
-    $errors[] = "Fila {$rowNumber}: {$reason}.";
-}
-
-function skip_summary_text(array $skipReasons): string
-{
-    if (count($skipReasons) === 0) {
-        return '';
-    }
-
-    arsort($skipReasons);
-    $parts = [];
-
-    foreach ($skipReasons as $reason => $count) {
-        $parts[] = "{$reason}: {$count}";
-    }
-
-    return implode('; ', $parts);
-}
-
 if (!isset($_FILES['students_csv']) || !is_uploaded_file($_FILES['students_csv']['tmp_name'])) {
     echo json_encode(['success' => false, 'message' => 'Debes seleccionar un archivo CSV.']);
     exit;
@@ -270,25 +153,12 @@ if ($headers === false) {
     exit;
 }
 
-$normalizedHeaders = normalize_student_csv_headers($headers);
-$missingColumns = missing_required_csv_columns($normalizedHeaders);
-
-if (count($missingColumns) > 0) {
-    fclose($handle);
-    echo json_encode([
-        'success' => false,
-        'message' => 'El CSV no tiene las columnas obligatorias de la planilla de alumnos: ' . implode(', ', $missingColumns) . '. Usa exactamente: ' . expected_csv_header_text() . '.',
-        'missing_columns' => $missingColumns,
-        'found_columns' => $headers,
-    ]);
-    exit;
-}
+$normalizedHeaders = array_map('normalize_header', $headers);
 
 $created = 0;
 $updated = 0;
 $skipped = 0;
 $errors = [];
-$skipReasons = [];
 $rowNumber = 1;
 
 try {
@@ -373,39 +243,44 @@ try {
         $row = array_combine($normalizedHeaders, array_slice($data, 0, count($normalizedHeaders)));
 
         if ($row === false) {
-            skip_student_row($rowNumber, 'formato inválido', $skipped, $errors, $skipReasons);
+            $skipped++;
+            $errors[] = "Fila {$rowNumber}: formato inválido.";
             continue;
         }
 
         $row = array_map(static fn($value) => normalize_csv_cell_value((string) $value), $row);
 
-        $course = csv_photo_value($row, 'course');
-        $rut = csv_photo_value($row, 'rut');
-        $name = csv_photo_value($row, 'name');
-        $guardianName = csv_photo_value($row, 'guardian_name');
-        $guardianEmail = strtolower(csv_photo_value($row, 'guardian_email'));
-        $guardianPhone = csv_photo_value($row, 'guardian_phone');
-        $backupName = csv_photo_value($row, 'backup_name');
-        $backupEmail = strtolower(csv_photo_value($row, 'backup_email'));
-        $backupPhone = csv_photo_value($row, 'backup_phone');
+        $course = csv_value($row, ['nombre_curso', 'curso', 'nombre_del_curso', '']);
+        $rut = csv_value($row, ['numero_rut', 'numero_de_rut', 'rut', 'run', 'rut_alumno', 'run_alumno']);
+        $name = csv_student_name_value($row);
+        $guardianName = csv_value($row, ['nombre_apoderado', 'apoderado', 'nombre_apoderado_titular']);
+        $guardianEmail = strtolower(csv_value($row, ['email_apoderado', 'correo_apoderado', 'mail_apoderado']));
+        $guardianPhone = csv_value($row, ['movil_apoderado', 'm_vil_apoderado', 'telefono_apoderado', 'celular_apoderado']);
+        $backupName = csv_value($row, ['nombre_suplente', 'nombre_apoderado_suplente', 'apoderado_suplente']);
+        $backupEmail = strtolower(csv_value($row, ['email_suplente', 'email_apoderado_suplente', 'correo_suplente', 'correo_apoderado_suplente']));
+        $backupPhone = csv_value($row, ['movil_suplente', 'movil_apoderado_suplente', 'm_vil_suplente', 'm_vil_apoderado_suplente', 'telefono_suplente', 'telefono_apoderado_suplente']);
 
         if ($course === '') {
-            skip_student_row($rowNumber, 'falta Nombre Curso', $skipped, $errors, $skipReasons);
+            $skipped++;
+            $errors[] = "Fila {$rowNumber}: falta Nombre Curso.";
             continue;
         }
 
         if ($rut === '' || normalize_rut_login($rut) === '') {
-            skip_student_row($rowNumber, 'falta Número Rut', $skipped, $errors, $skipReasons);
+            $skipped++;
+            $errors[] = "Fila {$rowNumber}: falta Número Rut.";
             continue;
         }
 
         if ($name === '') {
-            skip_student_row($rowNumber, 'falta Nombre Completo Alumno', $skipped, $errors, $skipReasons);
+            $skipped++;
+            $errors[] = "Fila {$rowNumber}: falta Nombre Alumno.";
             continue;
         }
 
         if ($guardianName === '') {
-            skip_student_row($rowNumber, 'falta Nombre Apoderado', $skipped, $errors, $skipReasons);
+            $skipped++;
+            $errors[] = "Fila {$rowNumber}: falta Nombre Apoderado.";
             continue;
         }
 
@@ -421,7 +296,8 @@ try {
         $initialPassword = rut_password($rut);
 
         if ($initialPassword === '') {
-            skip_student_row($rowNumber, 'el RUT no permite generar contraseña inicial', $skipped, $errors, $skipReasons);
+            $skipped++;
+            $errors[] = "Fila {$rowNumber}: el RUT no permite generar contraseña inicial.";
             continue;
         }
 
@@ -487,23 +363,14 @@ try {
     fclose($handle);
     $pdo->commit();
 
-    $summary = skip_summary_text($skipReasons);
-    $message = "Carga finalizada: {$created} creados, {$updated} actualizados, {$skipped} omitidos.";
-
-    if ($summary !== '') {
-        $message .= " Motivos de omisión: {$summary}.";
-    }
-
-    $message .= " Los alumnos ingresan con su RUT sin puntos ni guion y clave de los últimos 4 dígitos antes del verificador.";
-
+    $message = "Carga finalizada: {$created} creados, {$updated} actualizados, {$skipped} omitidos. Los alumnos ingresan con su RUT sin puntos ni guion y clave de los últimos 4 dígitos antes del verificador.";
     echo json_encode([
         'success' => true,
         'message' => $message,
         'created' => $created,
         'updated' => $updated,
         'skipped' => $skipped,
-        'skip_reasons' => $skipReasons,
-        'errors' => array_slice($errors, 0, 20),
+        'errors' => array_slice($errors, 0, 10),
     ]);
 } catch (Throwable $e) {
     fclose($handle);

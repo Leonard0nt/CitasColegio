@@ -188,7 +188,7 @@ require_admin();
             <div class="section-header">
                 <div>
                     <h2>Subir alumnos CSV</h2>
-                    <p>Usa las columnas de la planilla: Nombre Curso, Número Rut, Nombre Completo Alumno, Nombre Apoderado, Email Apoderado, Móvil Apoderado, Nombre Apoderado Suplente, Email Apoderado Suplente y Móvil Apoderado Suplente.</p>
+                    <p>Usa columnas: Nombre Curso, Número Rut, Nombre Alumno, Nombre Apoderado, Email/Móvil Apoderado y Nombre/Email/Móvil Suplente.</p>
                 </div>
                 <button class="icon-btn" id="closeUploadModalBtn">×</button>
             </div>
@@ -201,7 +201,6 @@ require_admin();
 
                 <p class="muted small-text">El usuario de cada alumno será su RUT sin puntos ni guion. La contraseña inicial será los últimos 4 números del RUT antes del verificador; por ejemplo: 27.562.097-1 → usuario 275620971 y clave 2097.</p>
                 <p class="muted small-text">Como el archivo no trae correo del alumno, se generará un correo interno usando su RUT para crear el perfil.</p>
-                <p class="muted small-text">Si en Linux/OnlyOffice la celda A1 aparece vacía, igual se tomará la primera columna como Nombre Curso cuando la segunda columna sea Número Rut.</p>
 
                 <div id="uploadResult" class="info-box hidden"></div>
 
