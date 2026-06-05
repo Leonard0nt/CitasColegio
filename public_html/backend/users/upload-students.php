@@ -493,7 +493,7 @@ try {
             $insertUser->execute([
                 ':name' => $name,
                 ':email' => $email,
-                ':password' => bulk_import_password_hash($initialPassword),
+                ':password' => bulk_import_password_hash($internalPassword),
             ]);
             $userId = (int) $pdo->lastInsertId();
             $created++;
