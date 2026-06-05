@@ -512,8 +512,11 @@ try {
         $deleteTeacher->execute([':user_id' => $userId]);
     }
 
-    fclose($handle);
     $pdo->commit();
+
+    if (is_resource($handle)) {
+        fclose($handle);
+    }
 
     $hasImportedRows = $created > 0 || $updated > 0 || $skipped === 0;
     $message = "Carga finalizada: {$created} creados, {$updated} actualizados, {$skipped} omitidos. Los alumnos quedan disponibles para reuniones, pero no tienen acceso de inicio de sesión ni perfil propio.";
@@ -531,11 +534,19 @@ try {
         'errors' => array_slice($errors, 0, 10),
     ]);
 } catch (Throwable $e) {
-    fclose($handle);
+    if (is_resource($handle)) {
+        fclose($handle);
+    }
 
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
 
-    echo json_encode(['success' => false, 'message' => 'Error al procesar el CSV de alumnos.']);
+    error_log('Error importando alumnos: ' . $e->getMessage());
+
+    echo json_encode([
+        'success' => false,
+        'message' => 'Error al procesar el CSV de alumnos.',
+        'debug' => $e->getMessage()
+    ]);
 }
