@@ -3,16 +3,31 @@
 
 -- 1) Permitimos temporalmente el rol antiguo user y los roles nuevos.
 ALTER TABLE users
-MODIFY role ENUM('admin', 'user', 'profesor', 'alumno') NOT NULL DEFAULT 'alumno';
+MODIFY role ENUM('admin', 'user', 'profesor', 'alumno') NOT NULL DEFAULT 'profesor';
 
--- 2) Convertimos los usuarios antiguos role=user a role=alumno.
-UPDATE users SET role = 'alumno' WHERE role = 'user';
+-- 2) Convertimos los usuarios antiguos role=user a role=profesor para que no existan cuentas de alumno.
+UPDATE users SET role = 'profesor' WHERE role = 'user';
 
 -- 3) Eliminamos el rol antiguo user del ENUM.
 ALTER TABLE users
-MODIFY role ENUM('admin', 'profesor', 'alumno') NOT NULL DEFAULT 'alumno';
+MODIFY role ENUM('admin', 'profesor') NOT NULL DEFAULT 'profesor';
 
--- 4) Creamos la tabla de apoderados para alumnos.
+-- 4) Creamos la tabla de referencias para alumnos.
+CREATE TABLE IF NOT EXISTS students (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
+    course VARCHAR(120),
+    rut VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    UNIQUE KEY unique_student_rut (rut),
+    INDEX idx_students_active (active),
+    INDEX idx_students_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 5) Creamos la tabla de apoderados para alumnos.
 CREATE TABLE IF NOT EXISTS student_guardians (
     id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
@@ -32,9 +47,9 @@ CREATE TABLE IF NOT EXISTS student_guardians (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_student_guardians_user
+    CONSTRAINT fk_student_guardians_student
         FOREIGN KEY (student_id)
-        REFERENCES users(id)
+        REFERENCES students(id)
         ON DELETE CASCADE,
 
     UNIQUE KEY unique_student_guardian (student_id)

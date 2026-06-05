@@ -259,7 +259,6 @@ try {
         SET name = :name, email = :email, role = "profesor", active = 1
         WHERE id = :id
     ');
-    $deleteGuardian = $pdo->prepare('DELETE FROM student_guardians WHERE student_id = :student_id');
     while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
         $rowNumber++;
 
@@ -377,7 +376,6 @@ try {
         }
 
         save_teacher_profile($pdo, $userId, $costCenter, $rut, $phone);
-        $deleteGuardian->execute([':student_id' => $userId]);
     }
 
     fclose($handle);

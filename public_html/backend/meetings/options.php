@@ -21,16 +21,16 @@ try {
         SELECT
             u.id,
             u.name,
-            u.email,
+            '' AS email,
             sg.guardian_name,
             sg.guardian_email,
             sg.guardian_phone,
             sg.backup_guardian_name,
             sg.backup_guardian_email,
             sg.backup_guardian_phone
-        FROM users u
+        FROM students u
         INNER JOIN student_guardians sg ON sg.student_id = u.id
-        WHERE u.role = 'alumno' AND u.active = 1
+        WHERE u.active = 1
         ORDER BY u.name ASC
     ");
 

@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(120) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'profesor', 'alumno') NOT NULL DEFAULT 'alumno',
+    role ENUM('admin', 'profesor') NOT NULL DEFAULT 'profesor',
     active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -29,21 +29,18 @@ CREATE TABLE IF NOT EXISTS teacher_profiles (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
-CREATE TABLE IF NOT EXISTS student_profiles (
+CREATE TABLE IF NOT EXISTS students (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    name VARCHAR(120) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
     course VARCHAR(120),
     rut VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_student_profiles_user
-        FOREIGN KEY (user_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE,
-
-    UNIQUE KEY unique_student_profile_user (user_id),
-    UNIQUE KEY unique_student_profile_rut (rut)
+    UNIQUE KEY unique_student_rut (rut),
+    INDEX idx_students_active (active),
+    INDEX idx_students_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS student_guardians (
@@ -65,9 +62,9 @@ CREATE TABLE IF NOT EXISTS student_guardians (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_student_guardians_user
+    CONSTRAINT fk_student_guardians_student
         FOREIGN KEY (student_id)
-        REFERENCES users(id)
+        REFERENCES students(id)
         ON DELETE CASCADE,
 
     UNIQUE KEY unique_student_guardian (student_id)
@@ -97,7 +94,7 @@ CREATE TABLE IF NOT EXISTS meetings (
 
     CONSTRAINT fk_meetings_student
         FOREIGN KEY (student_id)
-        REFERENCES users(id)
+        REFERENCES students(id)
         ON DELETE CASCADE,
 
     UNIQUE KEY uniq_meetings_teacher_datetime (teacher_id, meeting_date, meeting_time),

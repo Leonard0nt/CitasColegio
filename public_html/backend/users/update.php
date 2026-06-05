@@ -20,18 +20,111 @@ $role = $_POST['role'] ?? 'alumno';
 $active = isset($_POST['active']) ? (int) $_POST['active'] : 1;
 $password = $_POST['password'] ?? '';
 
-if ($id <= 0 || $name === '' || $email === '') {
+if ($id <= 0 || $name === '') {
     echo json_encode(['success' => false, 'message' => 'Datos incompletos.']);
     exit;
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if ($role !== 'alumno' && ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL))) {
     echo json_encode(['success' => false, 'message' => 'Correo inválido.']);
     exit;
 }
 
 if (!in_array($role, ['admin', 'profesor', 'alumno'], true)) {
     echo json_encode(['success' => false, 'message' => 'Rol inválido.']);
+    exit;
+}
+
+if ($role === 'alumno') {
+    if ($id <= 0 || $name === '') {
+        echo json_encode(['success' => false, 'message' => 'Datos incompletos.']);
+        exit;
+    }
+
+    $guardianName = trim($_POST['guardian_name'] ?? '');
+    if ($guardianName === '') {
+        echo json_encode(['success' => false, 'message' => 'El apoderado titular es obligatorio para alumnos.']);
+        exit;
+    }
+
+    try {
+        ensure_students_table($pdo);
+
+        $pdo->beginTransaction();
+        save_student_record(
+            $pdo,
+            $id,
+            $name,
+            $active,
+            $_POST['student_course'] ?? '',
+            $_POST['student_rut'] ?? ''
+        );
+
+        $stmtGuardian = $pdo->prepare('
+            INSERT INTO student_guardians (
+                student_id,
+                guardian_name,
+                guardian_rut,
+                guardian_phone,
+                guardian_email,
+                guardian_relationship,
+                backup_guardian_name,
+                backup_guardian_rut,
+                backup_guardian_phone,
+                backup_guardian_email,
+                backup_guardian_relationship
+            ) VALUES (
+                :student_id,
+                :guardian_name,
+                :guardian_rut,
+                :guardian_phone,
+                :guardian_email,
+                :guardian_relationship,
+                :backup_guardian_name,
+                :backup_guardian_rut,
+                :backup_guardian_phone,
+                :backup_guardian_email,
+                :backup_guardian_relationship
+            )
+            ON DUPLICATE KEY UPDATE
+                guardian_name = VALUES(guardian_name),
+                guardian_rut = VALUES(guardian_rut),
+                guardian_phone = VALUES(guardian_phone),
+                guardian_email = VALUES(guardian_email),
+                guardian_relationship = VALUES(guardian_relationship),
+                backup_guardian_name = VALUES(backup_guardian_name),
+                backup_guardian_rut = VALUES(backup_guardian_rut),
+                backup_guardian_phone = VALUES(backup_guardian_phone),
+                backup_guardian_email = VALUES(backup_guardian_email),
+                backup_guardian_relationship = VALUES(backup_guardian_relationship)
+        ');
+
+        $stmtGuardian->execute([
+            ':student_id' => $id,
+            ':guardian_name' => $guardianName,
+            ':guardian_rut' => trim($_POST['guardian_rut'] ?? ''),
+            ':guardian_phone' => trim($_POST['guardian_phone'] ?? ''),
+            ':guardian_email' => trim($_POST['guardian_email'] ?? ''),
+            ':guardian_relationship' => trim($_POST['guardian_relationship'] ?? ''),
+            ':backup_guardian_name' => trim($_POST['backup_guardian_name'] ?? ''),
+            ':backup_guardian_rut' => trim($_POST['backup_guardian_rut'] ?? ''),
+            ':backup_guardian_phone' => trim($_POST['backup_guardian_phone'] ?? ''),
+            ':backup_guardian_email' => trim($_POST['backup_guardian_email'] ?? ''),
+            ':backup_guardian_relationship' => trim($_POST['backup_guardian_relationship'] ?? ''),
+        ]);
+
+        $pdo->commit();
+        echo json_encode(['success' => true, 'message' => 'Alumno actualizado como referencia correctamente.']);
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+
+        echo json_encode([
+            'success' => false,
+            'message' => $e->getCode() === '23000' ? 'El RUT ya existe.' : 'Error al actualizar alumno.'
+        ]);
+    }
     exit;
 }
 
@@ -88,81 +181,6 @@ try {
         );
     } else {
         delete_teacher_profile($pdo, $id);
-    }
-
-    if ($role === 'alumno') {
-        save_student_profile(
-            $pdo,
-            $id,
-            $_POST['student_course'] ?? '',
-            $_POST['student_rut'] ?? ''
-        );
-
-        $guardianName = trim($_POST['guardian_name'] ?? '');
-
-        if ($guardianName === '') {
-            $pdo->rollBack();
-            echo json_encode(['success' => false, 'message' => 'El apoderado titular es obligatorio para alumnos.']);
-            exit;
-        }
-
-        $stmtGuardian = $pdo->prepare('
-            INSERT INTO student_guardians (
-                student_id,
-                guardian_name,
-                guardian_rut,
-                guardian_phone,
-                guardian_email,
-                guardian_relationship,
-                backup_guardian_name,
-                backup_guardian_rut,
-                backup_guardian_phone,
-                backup_guardian_email,
-                backup_guardian_relationship
-            ) VALUES (
-                :student_id,
-                :guardian_name,
-                :guardian_rut,
-                :guardian_phone,
-                :guardian_email,
-                :guardian_relationship,
-                :backup_guardian_name,
-                :backup_guardian_rut,
-                :backup_guardian_phone,
-                :backup_guardian_email,
-                :backup_guardian_relationship
-            )
-            ON DUPLICATE KEY UPDATE
-                guardian_name = VALUES(guardian_name),
-                guardian_rut = VALUES(guardian_rut),
-                guardian_phone = VALUES(guardian_phone),
-                guardian_email = VALUES(guardian_email),
-                guardian_relationship = VALUES(guardian_relationship),
-                backup_guardian_name = VALUES(backup_guardian_name),
-                backup_guardian_rut = VALUES(backup_guardian_rut),
-                backup_guardian_phone = VALUES(backup_guardian_phone),
-                backup_guardian_email = VALUES(backup_guardian_email),
-                backup_guardian_relationship = VALUES(backup_guardian_relationship)
-        ');
-
-        $stmtGuardian->execute([
-            ':student_id' => $id,
-            ':guardian_name' => $guardianName,
-            ':guardian_rut' => trim($_POST['guardian_rut'] ?? ''),
-            ':guardian_phone' => trim($_POST['guardian_phone'] ?? ''),
-            ':guardian_email' => trim($_POST['guardian_email'] ?? ''),
-            ':guardian_relationship' => trim($_POST['guardian_relationship'] ?? ''),
-            ':backup_guardian_name' => trim($_POST['backup_guardian_name'] ?? ''),
-            ':backup_guardian_rut' => trim($_POST['backup_guardian_rut'] ?? ''),
-            ':backup_guardian_phone' => trim($_POST['backup_guardian_phone'] ?? ''),
-            ':backup_guardian_email' => trim($_POST['backup_guardian_email'] ?? ''),
-            ':backup_guardian_relationship' => trim($_POST['backup_guardian_relationship'] ?? ''),
-        ]);
-    } else {
-        delete_student_profile($pdo, $id);
-
-        $stmtDeleteGuardian = $pdo->prepare('DELETE FROM student_guardians WHERE student_id = :student_id');
-        $stmtDeleteGuardian->execute([':student_id' => $id]);
     }
 
     $pdo->commit();

@@ -290,40 +290,30 @@ $errors = [];
 $rowNumber = 1;
 
 try {
-    ensure_teacher_profiles_table($pdo);
-    ensure_student_profiles_table($pdo);
+    ensure_students_table($pdo);
     $pdo->beginTransaction();
 
     $findByRut = $pdo->prepare("
         SELECT
-            u.id,
-            u.name,
-            u.email,
-            u.role,
-            u.active,
-            sp.course AS student_course,
-            sp.rut AS student_rut,
+            s.id,
+            s.name,
+            '' AS email,
+            'alumno' AS role,
+            s.active,
+            s.course AS student_course,
+            s.rut AS student_rut,
             sg.guardian_name,
             sg.guardian_phone,
             sg.guardian_email,
             sg.backup_guardian_name,
             sg.backup_guardian_phone,
             sg.backup_guardian_email
-        FROM users u
-        INNER JOIN student_profiles sp ON sp.user_id = u.id
-        LEFT JOIN student_guardians sg ON sg.student_id = u.id
-        WHERE LOWER(REPLACE(REPLACE(REPLACE(sp.rut, '.', ''), '-', ''), ' ', '')) = :rut
+        FROM students s
+        LEFT JOIN student_guardians sg ON sg.student_id = s.id
+        WHERE LOWER(REPLACE(REPLACE(REPLACE(s.rut, '.', ''), '-', ''), ' ', '')) = :rut
         LIMIT 1
     ");
-    $insertUser = $pdo->prepare('
-        INSERT INTO users (name, email, password, role, active)
-        VALUES (:name, :email, :password, "alumno", 1)
-    ');
-    $updateUser = $pdo->prepare('
-        UPDATE users
-        SET name = :name, email = :email, role = "alumno", active = 1
-        WHERE id = :id
-    ');
+
     $upsertGuardian = $pdo->prepare('
         INSERT INTO student_guardians (
             student_id,
@@ -358,7 +348,6 @@ try {
             backup_guardian_phone = VALUES(backup_guardian_phone),
             backup_guardian_email = VALUES(backup_guardian_email)
     ');
-    $deleteTeacher = $pdo->prepare('DELETE FROM teacher_profiles WHERE user_id = :user_id');
 
     while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
         $rowNumber++;
@@ -452,22 +441,20 @@ try {
         }
 
         $loginRut = normalize_rut_login($rut);
-        $internalPassword = bin2hex(random_bytes(16));
-        $email = rut_to_email_key($rut) . '@alumno.local';
-        $userId = 0;
+        $studentId = 0;
         $existingUser = null;
         $findByRut->execute([':rut' => $loginRut]);
         $existingByRut = $findByRut->fetch();
 
         if ($existingByRut) {
             $existingUser = $existingByRut;
-            $userId = (int) $existingByRut['id'];
+            $studentId = (int) $existingByRut['id'];
         }
 
-        if ($userId > 0) {
+        if ($studentId > 0) {
             $incomingUser = [
                 'name' => $name,
-                'email' => $email,
+                'email' => '',
                 'role' => 'alumno',
                 'active' => '1',
                 'student_course' => $course,
@@ -484,24 +471,14 @@ try {
                 $updated++;
             }
 
-            $updateUser->execute([
-                ':id' => $userId,
-                ':name' => $name,
-                ':email' => $email,
-            ]);
+            save_student_record($pdo, $studentId, $name, 1, $course, $rut);
         } else {
-            $insertUser->execute([
-                ':name' => $name,
-                ':email' => $email,
-                ':password' => bulk_import_password_hash($internalPassword),
-            ]);
-            $userId = (int) $pdo->lastInsertId();
+            $studentId = save_student_record($pdo, null, $name, 1, $course, $rut);
             $created++;
         }
 
-        save_student_profile($pdo, $userId, $course, $rut);
         $upsertGuardian->execute([
-            ':student_id' => $userId,
+            ':student_id' => $studentId,
             ':guardian_name' => $guardianName,
             ':guardian_phone' => $guardianPhone,
             ':guardian_email' => $guardianEmail,
@@ -509,7 +486,6 @@ try {
             ':backup_guardian_phone' => $backupPhone,
             ':backup_guardian_email' => $backupEmail,
         ]);
-        $deleteTeacher->execute([':user_id' => $userId]);
     }
 
     $pdo->commit();

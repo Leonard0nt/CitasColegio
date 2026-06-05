@@ -1,18 +1,16 @@
+-- Desde esta versión los alumnos no son cuentas de usuario.
+-- Esta migración crea la tabla de referencias de alumnos usada por reuniones.
 
-CREATE TABLE IF NOT EXISTS student_profiles (
+CREATE TABLE IF NOT EXISTS students (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    name VARCHAR(120) NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1,
     course VARCHAR(120),
     rut VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    CONSTRAINT fk_student_profiles_user
-        FOREIGN KEY (user_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE,
-
-    UNIQUE KEY unique_student_profile_user (user_id),
-    UNIQUE KEY unique_student_profile_rut (rut)
+    UNIQUE KEY unique_student_rut (rut),
+    INDEX idx_students_active (active),
+    INDEX idx_students_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
