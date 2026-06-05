@@ -160,6 +160,6 @@ require_admin();
         </div>
     </div>
 
-    <script src="assets/js/users.js"></script>
+    <script src="assets/js/users.js?v=20260605-id-column"></script>
 </body>
 </html>

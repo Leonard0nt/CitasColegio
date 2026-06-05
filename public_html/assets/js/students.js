@@ -13,6 +13,16 @@ const cancelUploadBtn = document.getElementById('cancelUploadBtn');
 const uploadStudentsForm = document.getElementById('uploadStudentsForm');
 const uploadResult = document.getElementById('uploadResult');
 
+function removeVisibleIdHeader() {
+    const firstHeader = tableBody
+        ?.closest('table')
+        ?.querySelector('thead th:first-child');
+
+    if (firstHeader?.textContent.trim().toUpperCase() === 'ID') {
+        firstHeader.remove();
+    }
+}
+
 let editing = false;
 let studentsCache = [];
 
@@ -277,5 +287,7 @@ uploadStudentsForm.addEventListener('submit', async (event) => {
         submitButton.disabled = false;
     }
 });
+
+removeVisibleIdHeader();
 
 loadStudents();

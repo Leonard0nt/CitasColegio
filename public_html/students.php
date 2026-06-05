@@ -199,6 +199,6 @@ require_admin();
         </div>
     </div>
 
-    <script src="assets/js/students.js"></script>
+    <script src="assets/js/students.js?v=20260605-id-column"></script>
 </body>
 </html>
