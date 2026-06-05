@@ -23,6 +23,33 @@ function csv_value(array $row, array $aliases): string
     return '';
 }
 
+function csv_name_value(array $row): string
+{
+    $name = csv_value($row, [
+        'nombre_completo',
+        'nombres_completos',
+        'nombre_y_apellido',
+        'nombre_apellido',
+        'profesor',
+        'docente',
+        'funcionario',
+        'nombre',
+    ]);
+
+    if ($name !== '') {
+        return $name;
+    }
+
+    $parts = [
+        csv_value($row, ['nombres', 'primer_nombre', 'segundo_nombre']),
+        csv_value($row, ['apellido_paterno', 'primer_apellido', 'ap_paterno', 'paterno']),
+        csv_value($row, ['apellido_materno', 'segundo_apellido', 'ap_materno', 'materno']),
+    ];
+
+    $parts = array_filter($parts, static fn($part) => $part !== '');
+    return trim(preg_replace('/\s+/', ' ', implode(' ', $parts)));
+}
+
 function csv_phone_value(array $row): string
 {
     $aliases = [
@@ -80,10 +107,72 @@ function row_values_changed(array $current, array $incoming): bool
     return false;
 }
 
+function normalize_csv_cell_value(string $value): string
+{
+    $value = preg_replace('/^\xEF\xBB\xBF/', '', $value);
+    $value = str_replace("\xc2\xa0", ' ', (string) $value);
+    $value = repair_utf8_mojibake($value);
+
+    if (function_exists('mb_check_encoding') && !mb_check_encoding($value, 'UTF-8')) {
+        $converted = convert_to_utf8($value, ['Windows-1252', 'ISO-8859-1']);
+        $value = $converted ?? $value;
+    }
+
+    return trim(preg_replace('/\s+/', ' ', $value));
+}
+
+function repair_utf8_mojibake(string $value): string
+{
+    if ($value === '' || preg_match('/(?:Ã|Â|â|ï¿½|�)/u', $value) !== 1) {
+        return $value;
+    }
+
+    if (!function_exists('mb_convert_encoding') || !function_exists('mb_check_encoding')) {
+        return $value;
+    }
+
+    $candidate = @mb_convert_encoding($value, 'Windows-1252', 'UTF-8');
+
+    if ($candidate === false || !mb_check_encoding($candidate, 'UTF-8')) {
+        return $value;
+    }
+
+    return mojibake_score($candidate) < mojibake_score($value) ? $candidate : $value;
+}
+
+function mojibake_score(string $value): int
+{
+    $score = 0;
+
+    foreach (['Ã' => 3, 'Â' => 2, 'â' => 3, 'ï¿½' => 5, '�' => 5] as $fragment => $weight) {
+        $score += substr_count($value, $fragment) * $weight;
+    }
+
+    return $score;
+}
+
+function convert_to_utf8(string $contents, array $encodings): ?string
+{
+    foreach ($encodings as $encoding) {
+        if (function_exists('mb_convert_encoding')) {
+            $converted = @mb_convert_encoding($contents, 'UTF-8', $encoding);
+        } elseif (function_exists('iconv')) {
+            $converted = @iconv($encoding, 'UTF-8//IGNORE', $contents);
+        } else {
+            $converted = false;
+        }
+
+        if ($converted !== false && (!function_exists('mb_check_encoding') || mb_check_encoding($converted, 'UTF-8'))) {
+            return $converted;
+        }
+    }
+
+    return null;
+}
+
 function normalize_header(string $header): string
 {
-    $header = trim($header);
-    $header = preg_replace('/^\xEF\xBB\xBF/', '', $header);
+    $header = normalize_csv_cell_value($header);
     if (function_exists('iconv')) {
         $normalized = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $header);
         $normalized = $normalized === false ? $header : $normalized;
@@ -97,18 +186,22 @@ function normalize_header(string $header): string
 
 function normalize_file_encoding(string $contents): string
 {
-    if (!function_exists('mb_detect_encoding') || !function_exists('mb_convert_encoding')) {
+    if (function_exists('mb_check_encoding') && mb_check_encoding($contents, 'UTF-8')) {
         return $contents;
     }
 
-    $encoding = mb_detect_encoding($contents, ['UTF-8', 'ISO-8859-1', 'Windows-1252'], true);
+    $encodings = ['Windows-1252', 'ISO-8859-1'];
 
-    if ($encoding !== false && $encoding !== 'UTF-8') {
-        $converted = mb_convert_encoding($contents, 'UTF-8', $encoding);
-        return $converted === false ? $contents : $converted;
+    if (function_exists('mb_detect_encoding')) {
+        $encoding = mb_detect_encoding($contents, ['UTF-8', 'Windows-1252', 'ISO-8859-1'], true);
+
+        if ($encoding === 'Windows-1252') {
+            array_unshift($encodings, $encoding);
+            $encodings = array_values(array_unique($encodings));
+        }
     }
 
-    return $contents;
+    return convert_to_utf8($contents, $encodings) ?? $contents;
 }
 
 function detect_delimiter(string $headerLine): string
@@ -255,10 +348,27 @@ try {
             continue;
         }
 
-        $name = csv_value($row, ['nombre_completo', 'nombre']);
+        $row = array_map(static fn($value) => normalize_csv_cell_value((string) $value), $row);
+
+        $name = csv_name_value($row);
         $email = strtolower(csv_value($row, ['email', 'correo', 'e_mail']));
         $rut = csv_value($row, ['rut', 'run']);
-        $costCenter = csv_value($row, ['centro_costo', 'centro_de_costo', 'centro_costos', 'centro_de_costos', 'centro_coste', 'ceco']);
+        $costCenter = csv_value($row, [
+            'centro_costo',
+            'centro_de_costo',
+            'centro_costos',
+            'centro_de_costos',
+            'centro_de_costo_s',
+            'centro_coste',
+            'centro_de_coste',
+            'centro_costo_profesor',
+            'centro_de_costos_profesor',
+            'centro_costos_profesor',
+            'centro_de_costo_profesor',
+            'centro',
+            'ceco',
+            'cc',
+        ]);
         $phone = csv_phone_value($row);
 
         if ($name === '') {
