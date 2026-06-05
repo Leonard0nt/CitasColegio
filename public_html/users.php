@@ -59,12 +59,11 @@ require_admin();
                             <th>Móvil</th>
                             <th>Apoderado</th>
                             <th>Apoderado suplente</th>
-                            <th>Creado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
-                        <tr><td colspan="12">Cargando usuarios...</td></tr>
+                        <tr><td colspan="11">Cargando usuarios...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -209,7 +208,7 @@ require_admin();
             <div class="section-header">
                 <div>
                     <h2>Subir profesores CSV</h2>
-                    <p>Usa columnas como Centro Costo, Rut, Nombre Completo, Móvil y Email.</p>
+                    <p>Usa columnas como Centro Costo, Rut, Nombre Completo, Móvil/Número y Email. Solo se importan filas con Centro Costo.</p>
                 </div>
                 <button class="icon-btn" id="closeUploadModalBtn">×</button>
             </div>
@@ -221,7 +220,7 @@ require_admin();
                 </label>
 
                 <p class="muted small-text">El usuario de cada profesor será su RUT sin puntos ni guion. La contraseña inicial será los últimos 4 números del RUT antes del verificador; por ejemplo: 20.267.754-1 → usuario 202677541 y clave 7754.</p>
-                <p class="muted small-text">Si una fila no trae correo válido, se generará uno interno usando el RUT para permitir crear el perfil.</p>
+                <p class="muted small-text">Si una fila no trae correo válido, se generará uno interno usando el RUT para permitir crear el perfil. Las filas sin Centro Costo serán omitidas.</p>
 
                 <div id="uploadResult" class="info-box hidden"></div>
 

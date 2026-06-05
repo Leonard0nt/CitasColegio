@@ -95,7 +95,7 @@ function renderUsers(users) {
     usersCache = users;
 
     if (!users.length) {
-        tableBody.innerHTML = '<tr><td colspan="12">No hay usuarios registrados.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="11">No hay usuarios registrados.</td></tr>';
         return;
     }
 
@@ -111,7 +111,6 @@ function renderUsers(users) {
             <td>${teacherAttribute(user, 'teacher_phone')}</td>
             <td>${guardianSummary(user, false)}</td>
             <td>${guardianSummary(user, true)}</td>
-            <td>${escapeHtml(user.created_at)}</td>
             <td>
                 <div class="actions">
                     <button class="btn btn-small" data-action="edit" data-id="${user.id}">Editar</button>
@@ -191,7 +190,7 @@ async function loadUsers() {
         }
         renderUsers(data.users);
     } catch (error) {
-        tableBody.innerHTML = '<tr><td colspan="12">Error cargando usuarios.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="11">Error cargando usuarios.</td></tr>';
     }
 }
 

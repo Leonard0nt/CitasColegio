@@ -23,6 +23,17 @@ function csv_value(array $row, array $aliases): string
     return '';
 }
 
+function row_values_changed(array $current, array $incoming): bool
+{
+    foreach ($incoming as $key => $value) {
+        if (trim((string) ($current[$key] ?? '')) !== trim((string) $value)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 function normalize_header(string $header): string
 {
     $header = trim($header);
@@ -142,9 +153,31 @@ try {
     ensure_teacher_profiles_table($pdo);
     $pdo->beginTransaction();
 
-    $findByEmail = $pdo->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');
+    $findByEmail = $pdo->prepare('
+        SELECT
+            u.id,
+            u.name,
+            u.email,
+            u.role,
+            u.active,
+            tp.cost_center AS teacher_cost_center,
+            tp.rut AS teacher_rut,
+            tp.phone AS teacher_phone
+        FROM users u
+        LEFT JOIN teacher_profiles tp ON tp.user_id = u.id
+        WHERE u.email = :email
+        LIMIT 1
+    ');
     $findByRut = $pdo->prepare("
-        SELECT u.id
+        SELECT
+            u.id,
+            u.name,
+            u.email,
+            u.role,
+            u.active,
+            tp.cost_center AS teacher_cost_center,
+            tp.rut AS teacher_rut,
+            tp.phone AS teacher_phone
         FROM users u
         INNER JOIN teacher_profiles tp ON tp.user_id = u.id
         WHERE LOWER(REPLACE(REPLACE(REPLACE(tp.rut, '.', ''), '-', ''), ' ', '')) = :rut
@@ -156,7 +189,7 @@ try {
     ');
     $updateUser = $pdo->prepare('
         UPDATE users
-        SET name = :name, email = :email, password = :password, role = "profesor", active = 1
+        SET name = :name, email = :email, role = "profesor", active = 1
         WHERE id = :id
     ');
     $deleteGuardian = $pdo->prepare('DELETE FROM student_guardians WHERE student_id = :student_id');
@@ -179,8 +212,8 @@ try {
         $name = csv_value($row, ['nombre_completo', 'nombre']);
         $email = strtolower(csv_value($row, ['email', 'correo', 'e_mail']));
         $rut = csv_value($row, ['rut', 'run']);
-        $costCenter = csv_value($row, ['centro_costo', 'centro_de_costo', 'centro_costos']);
-        $phone = csv_value($row, ['movil', 'mobile', 'telefono', 'fono', 'celular']);
+        $costCenter = csv_value($row, ['centro_costo', 'centro_de_costo', 'centro_costos', 'centro_de_costos', 'centro_coste', 'ceco']);
+        $phone = csv_value($row, ['movil', 'mobile', 'telefono', 'fono', 'celular', 'numero', 'numero_telefono', 'numero_de_telefono', 'telefono_movil', 'telefono_celular']);
 
         if ($name === '') {
             $skipped++;
@@ -188,6 +221,13 @@ try {
             continue;
         }
 
+        if ($costCenter === '') {
+            $skipped++;
+            $errors[] = "Fila {$rowNumber}: falta el Centro Costo, por eso no se importó.";
+            continue;
+        }
+
+        $phone = normalize_teacher_phone_value($phone) ?? '';
         $loginRut = normalize_rut_login($rut);
         $initialPassword = rut_password($rut);
 
@@ -206,25 +246,42 @@ try {
         }
 
         $userId = 0;
+        $existingUser = null;
         $findByEmail->execute([':email' => $email]);
         $existingByEmail = $findByEmail->fetch();
 
         if ($existingByEmail) {
+            $existingUser = $existingByEmail;
             $userId = (int) $existingByEmail['id'];
         } elseif ($rut !== '') {
             $findByRut->execute([':rut' => $loginRut]);
             $existingByRut = $findByRut->fetch();
-            $userId = $existingByRut ? (int) $existingByRut['id'] : 0;
+            if ($existingByRut) {
+                $existingUser = $existingByRut;
+                $userId = (int) $existingByRut['id'];
+            }
         }
 
         if ($userId > 0) {
+            $incomingUser = [
+                'name' => $name,
+                'email' => $email,
+                'role' => 'profesor',
+                'active' => '1',
+                'teacher_cost_center' => $costCenter,
+                'teacher_rut' => $rut,
+                'teacher_phone' => $phone,
+            ];
+
+            if ($existingUser === null || row_values_changed($existingUser, $incomingUser)) {
+                $updated++;
+            }
+
             $updateUser->execute([
                 ':id' => $userId,
                 ':name' => $name,
                 ':email' => $email,
-                ':password' => password_hash($initialPassword, PASSWORD_DEFAULT),
             ]);
-            $updated++;
         } else {
             $insertUser->execute([
                 ':name' => $name,

@@ -25,6 +25,28 @@ function normalize_teacher_profile_value(?string $value): ?string
     return $value === '' ? null : $value;
 }
 
+function normalize_teacher_phone_value(?string $value): ?string
+{
+    $value = normalize_teacher_profile_value($value);
+
+    if ($value === null) {
+        return null;
+    }
+
+    $value = preg_replace('/\s+/', '', $value);
+
+    if (preg_match('/^[+-]?\d+(?:[.,]\d+)?e[+-]?\d+$/i', $value) === 1) {
+        $expanded = sprintf('%.0f', (float) str_replace(',', '.', $value));
+        return $expanded === '0' ? $value : $expanded;
+    }
+
+    if (preg_match('/^\d+[.,]0+$/', $value) === 1) {
+        return preg_replace('/[.,]0+$/', '', $value);
+    }
+
+    return $value;
+}
+
 function save_teacher_profile(PDO $pdo, int $userId, ?string $costCenter, ?string $rut, ?string $phone): void
 {
     $rut = normalize_teacher_profile_value($rut);
@@ -54,7 +76,7 @@ function save_teacher_profile(PDO $pdo, int $userId, ?string $costCenter, ?strin
         ':user_id' => $userId,
         ':cost_center' => normalize_teacher_profile_value($costCenter),
         ':rut' => $rut,
-        ':phone' => normalize_teacher_profile_value($phone),
+        ':phone' => normalize_teacher_phone_value($phone),
     ]);
 }
 
