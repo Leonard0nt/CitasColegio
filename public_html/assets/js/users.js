@@ -44,7 +44,6 @@ function openUploadModal() {
     uploadResult.className = 'info-box hidden';
     uploadResult.textContent = '';
     uploadTeachersForm.reset();
-    document.getElementById('default_password').value = 'Profesor12345';
     uploadModal.classList.remove('hidden');
 }
 

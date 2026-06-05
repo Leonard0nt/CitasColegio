@@ -220,11 +220,7 @@ require_admin();
                     <input type="file" name="teachers_csv" id="teachers_csv" accept=".csv,text/csv" required>
                 </label>
 
-                <label>
-                    Contraseña inicial para profesores nuevos
-                    <input type="text" name="default_password" id="default_password" value="Profesor12345" minlength="8" required>
-                </label>
-
+                <p class="muted small-text">El usuario de cada profesor será su RUT sin puntos ni guion. La contraseña inicial será los últimos 4 números del RUT antes del verificador; por ejemplo: 20.267.754-1 → usuario 202677541 y clave 7754.</p>
                 <p class="muted small-text">Si una fila no trae correo válido, se generará uno interno usando el RUT para permitir crear el perfil.</p>
 
                 <div id="uploadResult" class="info-box hidden"></div>
