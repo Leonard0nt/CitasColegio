@@ -16,10 +16,20 @@ function normalize_csv_cell_value(string $value): string
 
 function repair_text_encoding(string $value): string
 {
+    $value = ensure_valid_utf8($value);
     $value = repair_utf8_mojibake($value);
     $value = repair_macintosh_misdecode($value);
 
     return $value;
+}
+
+function ensure_valid_utf8(string $value): string
+{
+    if ($value === '' || !function_exists('mb_check_encoding') || mb_check_encoding($value, 'UTF-8')) {
+        return $value;
+    }
+
+    return convert_to_utf8($value, csv_supported_encodings()) ?? $value;
 }
 
 function repair_utf8_mojibake(string $value): string
@@ -28,22 +38,41 @@ function repair_utf8_mojibake(string $value): string
         return $value;
     }
 
-    if (!function_exists('mb_convert_encoding') || !function_exists('mb_check_encoding')) {
-        return $value;
+    $candidates = [$value];
+
+    foreach (['Windows-1252', 'ISO-8859-1'] as $encoding) {
+        $candidate = reinterpret_utf8_as_single_byte_encoding($value, $encoding);
+
+        if ($candidate !== null) {
+            $candidates[] = $candidate;
+        }
     }
 
-    $candidate = @mb_convert_encoding($value, 'Windows-1252', 'UTF-8');
+    return best_text_encoding_candidate($candidates);
+}
 
-    if ($candidate === false || !mb_check_encoding($candidate, 'UTF-8')) {
-        return $value;
+function reinterpret_utf8_as_single_byte_encoding(string $value, string $encoding): ?string
+{
+    if (!function_exists('mb_convert_encoding')) {
+        return null;
     }
 
-    return text_encoding_score($candidate) < text_encoding_score($value) ? $candidate : $value;
+    try {
+        $candidate = @mb_convert_encoding($value, $encoding, 'UTF-8');
+    } catch (ValueError $error) {
+        $candidate = false;
+    }
+
+    if ($candidate === false || (function_exists('mb_check_encoding') && !mb_check_encoding($candidate, 'UTF-8'))) {
+        return null;
+    }
+
+    return $candidate;
 }
 
 function repair_macintosh_misdecode(string $value): string
 {
-    if ($value === '' || preg_match('/[‡Ž’—œ–\x{0087}\x{008E}\x{0092}\x{0097}\x{009C}\x{0096}]/u', $value) !== 1) {
+    if ($value === '' || preg_match('/[‡Ž’—œ–ƒ„†Ÿçêîò\x{0083}\x{0084}\x{0086}\x{0087}\x{008E}\x{0092}\x{0096}\x{0097}\x{009C}\x{009F}]/u', $value) !== 1) {
         return $value;
     }
 
@@ -54,12 +83,24 @@ function repair_macintosh_misdecode(string $value): string
         '—' => 'ó',
         'œ' => 'ú',
         '–' => 'ñ',
+        'ƒ' => 'É',
+        '„' => 'Ñ',
+        '†' => 'Ü',
+        'Ÿ' => 'ü',
+        'ç' => 'Á',
+        'ê' => 'Í',
+        'î' => 'Ó',
+        'ò' => 'Ú',
+        "\u{0083}" => 'É',
+        "\u{0084}" => 'Ñ',
+        "\u{0086}" => 'Ü',
         "\u{0087}" => 'á',
         "\u{008E}" => 'é',
         "\u{0092}" => 'í',
+        "\u{0096}" => 'ñ',
         "\u{0097}" => 'ó',
         "\u{009C}" => 'ú',
-        "\u{0096}" => 'ñ',
+        "\u{009F}" => 'ü',
     ];
     $candidate = strtr($value, $map);
 
@@ -71,6 +112,27 @@ function mojibake_score(string $value): int
     return text_encoding_score($value);
 }
 
+function best_text_encoding_candidate(array $candidates): string
+{
+    $best = '';
+    $bestScore = PHP_INT_MAX;
+
+    foreach ($candidates as $candidate) {
+        if (!is_string($candidate) || (function_exists('mb_check_encoding') && !mb_check_encoding($candidate, 'UTF-8'))) {
+            continue;
+        }
+
+        $score = text_encoding_score($candidate);
+
+        if ($score < $bestScore) {
+            $best = $candidate;
+            $bestScore = $score;
+        }
+    }
+
+    return $best;
+}
+
 function text_encoding_score(string $value): int
 {
     $score = 0;
@@ -79,7 +141,7 @@ function text_encoding_score(string $value): int
         $score += substr_count($value, $fragment) * $weight;
     }
 
-    if (preg_match_all('/[‡Ž’—œ–]/u', $value, $matches) > 0) {
+    if (preg_match_all('/[‡Ž’—œ–ƒ„†Ÿçêîò]/u', $value, $matches) > 0) {
         $score += count($matches[0]) * 4;
     }
 
@@ -111,9 +173,9 @@ function convert_to_utf8(string $contents, array $encodings): ?string
             continue;
         }
 
-        $score = text_encoding_score($converted);
+        $score = text_encoding_score(repair_macintosh_misdecode($converted));
         if ($score < $bestScore) {
-            $best = $converted;
+            $best = repair_macintosh_misdecode($converted);
             $bestScore = $score;
         }
     }
