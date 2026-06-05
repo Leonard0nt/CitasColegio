@@ -290,7 +290,7 @@ $errors = [];
 $rowNumber = 1;
 
 try {
-    ensure_students_table($pdo);
+    ensure_student_guardians_table($pdo);
     $pdo->beginTransaction();
 
     $findByRut = $pdo->prepare("
