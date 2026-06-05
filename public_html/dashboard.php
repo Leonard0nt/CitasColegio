@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/session.php';
-require_login();
+require_roles(['admin', 'profesor']);
 ?>
 <!DOCTYPE html>
 <html lang="es">

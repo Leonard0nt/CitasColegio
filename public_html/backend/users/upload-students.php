@@ -51,6 +51,105 @@ function csv_value(array $row, array $aliases): string
     return '';
 }
 
+
+function csv_value_by_patterns(array $row, array $patterns): string
+{
+    foreach ($row as $header => $value) {
+        $normalizedHeader = normalize_header((string) $header);
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            continue;
+        }
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $normalizedHeader) === 1) {
+                return $value;
+            }
+        }
+    }
+
+    return '';
+}
+
+function csv_course_value(array $row): string
+{
+    $course = csv_value($row, [
+        'nombre_curso',
+        'curso',
+        'nombre_del_curso',
+        'curso_alumno',
+        'desc_curso',
+        'descripcion_curso',
+        'grado_curso',
+        'nivel_curso',
+        'curso_actual',
+    ]);
+
+    if ($course !== '') {
+        return $course;
+    }
+
+    $course = csv_value_by_patterns($row, [
+        '/(^|_)(nombre_)?curso($|_)/',
+        '/(^|_)desc(ripcion)?_?curso($|_)/',
+        '/(^|_)grado_?curso($|_)/',
+        '/(^|_)nivel_?curso($|_)/',
+    ]);
+
+    if ($course !== '') {
+        return $course;
+    }
+
+    $grade = csv_value($row, ['cod_grado', 'grado', 'nivel', 'nivel_ensenanza']);
+    $letter = csv_value($row, ['let_cur', 'letra_curso', 'letra']);
+    $parts = array_filter([$grade, $letter], static fn($part) => trim((string) $part) !== '');
+
+    return trim(implode(' ', $parts));
+}
+
+function csv_rut_value(array $row): string
+{
+    $rut = csv_value($row, [
+        'numero_rut',
+        'numero_de_rut',
+        'n_rut',
+        'nro_rut',
+        'num_rut',
+        'rut',
+        'run',
+        'mrun',
+        'rut_alumno',
+        'run_alumno',
+        'mrun_alumno',
+        'rut_estudiante',
+        'run_estudiante',
+        'numero_documento',
+        'nro_documento',
+    ]);
+
+    if ($rut !== '') {
+        return $rut;
+    }
+
+    return csv_value_by_patterns($row, [
+        '/(^|_)(n|no|num|nro|numero)?_?(rut|run)($|_)/',
+        '/(^|_)m?run_?(alumno|estudiante)?($|_)/',
+        '/(^|_)(rut|run)_?(alumno|estudiante)($|_)/',
+    ]);
+}
+
+function csv_guardian_contact_value(array $row, array $specificAliases, array $contactPatterns): string
+{
+    $value = csv_value($row, $specificAliases);
+
+    if ($value !== '') {
+        return $value;
+    }
+
+    return csv_value_by_patterns($row, $contactPatterns);
+}
+
 function csv_student_name_value(array $row): string
 {
     $name = csv_value($row, [
@@ -59,20 +158,39 @@ function csv_student_name_value(array $row): string
         'nombre_completa_alumno',
         'nombre_estudiante',
         'nombre_completo_estudiante',
+        'nombre_completo',
         'alumno',
         'estudiante',
+        'nom_alu',
+        'nombres_alu',
+        'nombre_alu',
         'nombre',
     ]);
+
+    if ($name === '') {
+        $name = csv_value_by_patterns($row, [
+            '/(^|_)(nombre|nombres|nom)_?(alumno|alu|estudiante)($|_)/',
+            '/(^|_)(alumno|estudiante)($|_)/',
+        ]);
+    }
 
     if ($name !== '') {
         return $name;
     }
 
     $parts = [
-        csv_value($row, ['nombres', 'primer_nombre', 'segundo_nombre']),
-        csv_value($row, ['apellido_paterno', 'primer_apellido', 'ap_paterno', 'paterno']),
-        csv_value($row, ['apellido_materno', 'segundo_apellido', 'ap_materno', 'materno']),
+        csv_value($row, ['nombres', 'nombres_alumno', 'primer_nombre', 'segundo_nombre', 'nom_alu', 'nombre_alu']),
+        csv_value($row, ['apellido_paterno', 'apellido_paterno_alumno', 'primer_apellido', 'ap_paterno', 'paterno', 'ape_pat_alu', 'ap_pat_alu']),
+        csv_value($row, ['apellido_materno', 'apellido_materno_alumno', 'segundo_apellido', 'ap_materno', 'materno', 'ape_mat_alu', 'ap_mat_alu']),
     ];
+
+    if (implode('', $parts) === '') {
+        $parts = [
+            csv_value_by_patterns($row, ['/(^|_)(nombres?|nom)_?(alu|alumno|estudiante)?($|_)/']),
+            csv_value_by_patterns($row, ['/(^|_)(ape(llido)?_?)?(pat(erno)?|primer_apellido)_?(alu|alumno|estudiante)?($|_)/']),
+            csv_value_by_patterns($row, ['/(^|_)(ape(llido)?_?)?(mat(erno)?|segundo_apellido)_?(alu|alumno|estudiante)?($|_)/']),
+        ];
+    }
 
     $parts = array_filter($parts, static fn($part) => $part !== '');
     return trim(preg_replace('/\s+/', ' ', implode(' ', $parts)));
@@ -257,21 +375,54 @@ try {
 
         $row = array_map(static fn($value) => normalize_csv_cell_value((string) $value), $row);
 
-        $course = csv_value($row, ['nombre_curso', 'curso', 'nombre_del_curso', '']);
-        $rut = csv_value($row, ['numero_rut', 'numero_de_rut', 'rut', 'run', 'rut_alumno', 'run_alumno']);
+        $course = csv_course_value($row);
+        $rut = csv_rut_value($row);
         $name = csv_student_name_value($row);
-        $guardianName = csv_value($row, ['nombre_apoderado', 'apoderado', 'nombre_apoderado_titular']);
-        $guardianEmail = strtolower(csv_value($row, ['email_apoderado', 'correo_apoderado', 'mail_apoderado']));
-        $guardianPhone = csv_value($row, ['movil_apoderado', 'm_vil_apoderado', 'telefono_apoderado', 'celular_apoderado']);
-        $backupName = csv_value($row, ['nombre_suplente', 'nombre_apoderado_suplente', 'apoderado_suplente']);
-        $backupEmail = strtolower(csv_value($row, ['email_suplente', 'email_apoderado_suplente', 'correo_suplente', 'correo_apoderado_suplente']));
-        $backupPhone = csv_value($row, ['movil_suplente', 'movil_apoderado_suplente', 'm_vil_suplente', 'm_vil_apoderado_suplente', 'telefono_suplente', 'telefono_apoderado_suplente']);
-
-        if ($course === '') {
-            $skipped++;
-            $errors[] = "Fila {$rowNumber}: falta Nombre Curso.";
-            continue;
-        }
+        $guardianName = csv_guardian_contact_value($row, [
+            'nombre_apoderado',
+            'apoderado',
+            'nombre_apoderado_titular',
+            'nombre_tutor',
+            'tutor',
+        ], ['/(^|_)(nombre_?)?(apoderado|tutor)($|_)/']);
+        $guardianEmail = strtolower(csv_guardian_contact_value($row, [
+            'email_apoderado',
+            'correo_apoderado',
+            'mail_apoderado',
+            'email_tutor',
+            'correo_tutor',
+        ], ['/(^|_)(email|correo|mail)_?(apoderado|tutor)($|_)/']));
+        $guardianPhone = csv_guardian_contact_value($row, [
+            'movil_apoderado',
+            'm_vil_apoderado',
+            'telefono_apoderado',
+            'celular_apoderado',
+            'fono_apoderado',
+            'movil_tutor',
+            'telefono_tutor',
+        ], ['/(^|_)(movil|mobile|celular|telefono|fono)_?(apoderado|tutor)($|_)/']);
+        $backupName = csv_guardian_contact_value($row, [
+            'nombre_suplente',
+            'nombre_apoderado_suplente',
+            'apoderado_suplente',
+            'nombre_tutor_suplente',
+        ], ['/(^|_)(nombre_?)?(apoderado|tutor)?_?suplente($|_)/']);
+        $backupEmail = strtolower(csv_guardian_contact_value($row, [
+            'email_suplente',
+            'email_apoderado_suplente',
+            'correo_suplente',
+            'correo_apoderado_suplente',
+            'mail_suplente',
+        ], ['/(^|_)(email|correo|mail)_?(apoderado|tutor)?_?suplente($|_)/']));
+        $backupPhone = csv_guardian_contact_value($row, [
+            'movil_suplente',
+            'movil_apoderado_suplente',
+            'm_vil_suplente',
+            'm_vil_apoderado_suplente',
+            'telefono_suplente',
+            'telefono_apoderado_suplente',
+            'celular_suplente',
+        ], ['/(^|_)(movil|mobile|celular|telefono|fono)_?(apoderado|tutor)?_?suplente($|_)/']);
 
         if ($rut === '' || normalize_rut_login($rut) === '') {
             $skipped++;
@@ -286,9 +437,7 @@ try {
         }
 
         if ($guardianName === '') {
-            $skipped++;
-            $errors[] = "Fila {$rowNumber}: falta Nombre Apoderado.";
-            continue;
+            $guardianName = 'Apoderado no informado';
         }
 
         if ($guardianEmail !== '' && !filter_var($guardianEmail, FILTER_VALIDATE_EMAIL)) {
@@ -300,14 +449,7 @@ try {
         }
 
         $loginRut = normalize_rut_login($rut);
-        $initialPassword = rut_password($rut);
-
-        if ($initialPassword === '') {
-            $skipped++;
-            $errors[] = "Fila {$rowNumber}: el RUT no permite generar contraseña inicial.";
-            continue;
-        }
-
+        $internalPassword = bin2hex(random_bytes(16));
         $email = rut_to_email_key($rut) . '@alumno.local';
         $userId = 0;
         $existingUser = null;
@@ -348,7 +490,7 @@ try {
             $insertUser->execute([
                 ':name' => $name,
                 ':email' => $email,
-                ':password' => password_hash($initialPassword, PASSWORD_DEFAULT),
+                ':password' => password_hash($internalPassword, PASSWORD_DEFAULT),
             ]);
             $userId = (int) $pdo->lastInsertId();
             $created++;
@@ -371,7 +513,7 @@ try {
     $pdo->commit();
 
     $hasImportedRows = $created > 0 || $updated > 0 || $skipped === 0;
-    $message = "Carga finalizada: {$created} creados, {$updated} actualizados, {$skipped} omitidos. Los alumnos ingresan con su RUT sin puntos ni guion y clave de los últimos 4 dígitos antes del verificador.";
+    $message = "Carga finalizada: {$created} creados, {$updated} actualizados, {$skipped} omitidos. Los alumnos quedan disponibles para reuniones, pero no tienen acceso de inicio de sesión ni perfil propio.";
 
     if (!$hasImportedRows) {
         $message = "No se importó ningún alumno: {$skipped} filas fueron omitidas. Revisa los detalles del CSV.";

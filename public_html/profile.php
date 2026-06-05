@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/session.php';
-require_login();
+require_roles(['admin', 'profesor']);
 $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
 ?>
 <!DOCTYPE html>

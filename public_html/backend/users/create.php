@@ -19,6 +19,20 @@ $password = $_POST['password'] ?? '';
 $role = $_POST['role'] ?? 'alumno';
 $active = isset($_POST['active']) ? (int) $_POST['active'] : 1;
 
+if (!in_array($role, ['admin', 'profesor', 'alumno'], true)) {
+    echo json_encode(['success' => false, 'message' => 'Rol inválido.']);
+    exit;
+}
+
+if ($role === 'alumno' && $email === '') {
+    $studentRutKey = strtolower(preg_replace('/[^0-9kK]+/', '', $_POST['student_rut'] ?? ''));
+    $email = ($studentRutKey !== '' ? $studentRutKey : uniqid('alumno_', true)) . '@alumno.local';
+}
+
+if ($role === 'alumno' && $password === '') {
+    $password = bin2hex(random_bytes(16));
+}
+
 if ($name === '' || $email === '' || $password === '') {
     echo json_encode(['success' => false, 'message' => 'Nombre, correo y contraseña son obligatorios.']);
     exit;
@@ -26,11 +40,6 @@ if ($name === '' || $email === '' || $password === '') {
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     echo json_encode(['success' => false, 'message' => 'Correo inválido.']);
-    exit;
-}
-
-if (!in_array($role, ['admin', 'profesor', 'alumno'], true)) {
-    echo json_encode(['success' => false, 'message' => 'Rol inválido.']);
     exit;
 }
 
