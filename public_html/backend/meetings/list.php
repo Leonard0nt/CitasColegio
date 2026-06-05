@@ -17,9 +17,9 @@ try {
         SELECT
             m.id,
             m.teacher_id,
-            t.name AS teacher_name,
+            COALESCE(t.name, 'Profesor eliminado') AS teacher_name,
             m.student_id,
-            s.name AS student_name,
+            COALESCE(s.name, 'Alumno eliminado') AS student_name,
             m.guardian_type,
             m.guardian_name,
             m.guardian_email,
@@ -29,8 +29,8 @@ try {
             m.notes,
             m.created_at
         FROM meetings m
-        INNER JOIN users t ON t.id = m.teacher_id
-        INNER JOIN students s ON s.id = m.student_id
+        LEFT JOIN users t ON t.id = m.teacher_id
+        LEFT JOIN students s ON s.id = m.student_id
     ";
 
     $params = [];
