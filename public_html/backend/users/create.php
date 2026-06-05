@@ -37,7 +37,7 @@ if ($role === 'alumno') {
     }
 
     try {
-        ensure_students_table($pdo);
+        ensure_student_guardians_table($pdo);
 
         $pdo->beginTransaction();
         $studentId = save_student_record(
