@@ -16,14 +16,15 @@ $teacherId = $loggedRole === 'admin'
     ? (int) ($_POST['teacher_id'] ?? 0)
     : $loggedUserId;
 $studentId = (int) ($_POST['student_id'] ?? 0);
+$studentCourse = trim($_POST['student_course'] ?? '');
 $guardianType = $_POST['guardian_type'] ?? 'titular';
 $meetingDate = trim($_POST['meeting_date'] ?? '');
 $meetingTime = trim($_POST['meeting_time'] ?? '');
 $status = $_POST['status'] ?? 'por_atender';
 $notes = trim($_POST['notes'] ?? '');
 
-if ($teacherId <= 0 || $studentId <= 0 || $meetingDate === '' || $meetingTime === '') {
-    echo json_encode(['success' => false, 'message' => 'Profesor, alumno, fecha y hora son obligatorios.']);
+if ($teacherId <= 0 || $studentId <= 0 || $studentCourse === '' || $meetingDate === '' || $meetingTime === '') {
+    echo json_encode(['success' => false, 'message' => 'Profesor, curso, alumno, fecha y hora son obligatorios.']);
     exit;
 }
 
@@ -48,6 +49,7 @@ try {
     $stmtStudent = $pdo->prepare("
         SELECT
             u.id,
+            u.course AS student_course,
             sg.guardian_name,
             sg.guardian_email,
             sg.guardian_phone,
@@ -64,6 +66,11 @@ try {
 
     if (!$student) {
         echo json_encode(['success' => false, 'message' => 'Alumno inválido o sin apoderado.']);
+        exit;
+    }
+
+    if (trim((string) $student['student_course']) !== $studentCourse) {
+        echo json_encode(['success' => false, 'message' => 'El alumno no pertenece al curso seleccionado.']);
         exit;
     }
 

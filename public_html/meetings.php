@@ -111,8 +111,17 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
 
                 <div class="form-grid">
                     <label>
+                        Curso
+                        <select name="student_course" id="student_course" required>
+                            <option value="">Seleccione un curso</option>
+                        </select>
+                    </label>
+
+                    <label>
                         Alumno
-                        <select name="student_id" id="student_id" required></select>
+                        <select name="student_id" id="student_id" required disabled>
+                            <option value="">Primero seleccione un curso</option>
+                        </select>
                     </label>
 
                     <label>
@@ -152,6 +161,6 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
     <script>
         window.CURRENT_ROLE = <?= json_encode($_SESSION['user_role'] ?? '') ?>;
     </script>
-    <script src="assets/js/meetings.js"></script>
+    <script src="assets/js/meetings.js?v=20260605-course-first"></script>
 </body>
 </html>

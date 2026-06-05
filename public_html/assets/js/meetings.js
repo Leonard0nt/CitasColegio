@@ -6,6 +6,7 @@ const openBtn = document.getElementById('openCreateMeetingBtn');
 const closeBtn = document.getElementById('closeMeetingModalBtn');
 const cancelBtn = document.getElementById('cancelMeetingBtn');
 const teacherSelect = document.getElementById('teacher_id');
+const courseSelect = document.getElementById('student_course');
 const studentSelect = document.getElementById('student_id');
 const guardianTypeSelect = document.getElementById('guardian_type');
 const dateInput = document.getElementById('meeting_date');
@@ -47,6 +48,64 @@ function formatTime(time) {
     return String(time || '').slice(0, 5);
 }
 
+function normalizeCourse(course) {
+    return String(course ?? '').trim();
+}
+
+function getAvailableCourses() {
+    return [...new Set(options.students
+        .map(student => normalizeCourse(student.student_course))
+        .filter(Boolean))]
+        .sort((first, second) => first.localeCompare(second, 'es', { numeric: true, sensitivity: 'base' }));
+}
+
+function populateCourseSelect() {
+    const courses = getAvailableCourses();
+    courseSelect.innerHTML = '<option value="">Seleccione un curso</option>';
+
+    courses.forEach(course => {
+        const option = document.createElement('option');
+        option.value = course;
+        option.textContent = course;
+        courseSelect.appendChild(option);
+    });
+
+    courseSelect.disabled = courses.length === 0;
+
+    if (!courses.length) {
+        courseSelect.innerHTML = '<option value="">No hay cursos disponibles</option>';
+    }
+}
+
+function studentsForSelectedCourse() {
+    const selectedCourse = normalizeCourse(courseSelect.value);
+    if (!selectedCourse) return [];
+
+    return options.students.filter(student => normalizeCourse(student.student_course) === selectedCourse);
+}
+
+function studentOptionLabel(student) {
+    const rut = String(student.student_rut || '').trim();
+    return rut ? `${student.name} (${rut})` : student.name;
+}
+
+function populateStudentSelect() {
+    const students = studentsForSelectedCourse();
+    studentSelect.disabled = !courseSelect.value || students.length === 0;
+
+    if (!courseSelect.value) {
+        studentSelect.innerHTML = '<option value="">Primero seleccione un curso</option>';
+        updateGuardianAvailability();
+        return;
+    }
+
+    studentSelect.innerHTML = students.length
+        ? '<option value="">Seleccione un alumno</option>' + students.map(s => `<option value="${s.id}">${escapeHtml(studentOptionLabel(s))}</option>`).join('')
+        : '<option value="">No hay alumnos con apoderado en este curso</option>';
+
+    updateGuardianAvailability();
+}
+
 async function loadOptions() {
     const res = await fetch('backend/meetings/options.php');
     const data = await res.json();
@@ -64,11 +123,8 @@ async function loadOptions() {
             : '<option value="">No hay profesores activos</option>';
     }
 
-    studentSelect.innerHTML = data.students.length
-        ? data.students.map(s => `<option value="${s.id}">${escapeHtml(s.name)} (${escapeHtml(s.email)})</option>`).join('')
-        : '<option value="">No hay alumnos con apoderado</option>';
-
-    updateGuardianAvailability();
+    populateCourseSelect();
+    populateStudentSelect();
 }
 
 function getSelectedStudent() {
@@ -77,10 +133,20 @@ function getSelectedStudent() {
 
 function updateGuardianAvailability() {
     const student = getSelectedStudent();
-    if (!student) return;
-
     const titular = guardianTypeSelect.querySelector('option[value="titular"]');
     const suplente = guardianTypeSelect.querySelector('option[value="suplente"]');
+
+    if (!student) {
+        titular.textContent = 'Apoderado titular';
+        titular.disabled = true;
+        suplente.textContent = 'Apoderado suplente';
+        suplente.disabled = true;
+        guardianTypeSelect.value = 'titular';
+        guardianTypeSelect.disabled = true;
+        return;
+    }
+
+    guardianTypeSelect.disabled = false;
 
     titular.textContent = student.guardian_name
         ? `Apoderado titular (${student.guardian_name})`
@@ -149,8 +215,9 @@ function openModal() {
     dateInput.value = today;
     timeInput.value = '08:00';
     statusSelect.value = 'por_atender';
+    if (courseSelect) courseSelect.value = '';
+    populateStudentSelect();
     modal.classList.remove('hidden');
-    updateGuardianAvailability();
 }
 
 function closeModal() {
@@ -211,6 +278,7 @@ async function deleteMeeting(id) {
 if (openBtn) openBtn.addEventListener('click', openModal);
 if (closeBtn) closeBtn.addEventListener('click', closeModal);
 if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+if (courseSelect) courseSelect.addEventListener('change', populateStudentSelect);
 if (studentSelect) studentSelect.addEventListener('change', updateGuardianAvailability);
 if (statusFilter) statusFilter.addEventListener('change', loadMeetings);
 
