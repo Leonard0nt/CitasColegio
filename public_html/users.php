@@ -50,7 +50,6 @@ require_admin();
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Nombre</th>
                             <th>Correo</th>
                             <th>Estado</th>
@@ -61,7 +60,7 @@ require_admin();
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
-                        <tr><td colspan="8">Cargando profesores...</td></tr>
+                        <tr><td colspan="7">Cargando profesores...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -161,6 +160,6 @@ require_admin();
         </div>
     </div>
 
-    <script src="assets/js/users.js"></script>
+    <script src="assets/js/users.js?v=20260605-id-column"></script>
 </body>
 </html>

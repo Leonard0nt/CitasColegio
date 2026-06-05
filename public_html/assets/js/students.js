@@ -13,6 +13,16 @@ const cancelUploadBtn = document.getElementById('cancelUploadBtn');
 const uploadStudentsForm = document.getElementById('uploadStudentsForm');
 const uploadResult = document.getElementById('uploadResult');
 
+function removeVisibleIdHeader() {
+    const firstHeader = tableBody
+        ?.closest('table')
+        ?.querySelector('thead th:first-child');
+
+    if (firstHeader?.textContent.trim().toUpperCase() === 'ID') {
+        firstHeader.remove();
+    }
+}
+
 let editing = false;
 let studentsCache = [];
 
@@ -85,13 +95,12 @@ function renderStudents(students) {
     studentsCache = students;
 
     if (!students.length) {
-        tableBody.innerHTML = '<tr><td colspan="8">No hay alumnos registrados.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7">No hay alumnos registrados.</td></tr>';
         return;
     }
 
     tableBody.innerHTML = students.map(student => `
         <tr>
-            <td>${student.id}</td>
             <td>${escapeHtml(student.name)}</td>
             <td>${studentAttribute(student, 'student_course')}</td>
             <td>${studentAttribute(student, 'student_rut')}</td>
@@ -168,7 +177,7 @@ async function loadStudents() {
         }
         renderStudents(data.users);
     } catch (error) {
-        tableBody.innerHTML = '<tr><td colspan="8">Error cargando alumnos.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7">Error cargando alumnos.</td></tr>';
     }
 }
 
@@ -278,5 +287,7 @@ uploadStudentsForm.addEventListener('submit', async (event) => {
         submitButton.disabled = false;
     }
 });
+
+removeVisibleIdHeader();
 
 loadStudents();

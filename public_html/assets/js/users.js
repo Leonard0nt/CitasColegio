@@ -13,6 +13,16 @@ const cancelUploadBtn = document.getElementById('cancelUploadBtn');
 const uploadTeachersForm = document.getElementById('uploadTeachersForm');
 const uploadResult = document.getElementById('uploadResult');
 
+function removeVisibleIdHeader() {
+    const firstHeader = tableBody
+        ?.closest('table')
+        ?.querySelector('thead th:first-child');
+
+    if (firstHeader?.textContent.trim().toUpperCase() === 'ID') {
+        firstHeader.remove();
+    }
+}
+
 let editing = false;
 let usersCache = [];
 
@@ -76,13 +86,12 @@ function renderUsers(users) {
     usersCache = users;
 
     if (!users.length) {
-        tableBody.innerHTML = '<tr><td colspan="8">No hay profesores registrados.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7">No hay profesores registrados.</td></tr>';
         return;
     }
 
     tableBody.innerHTML = users.map(user => `
         <tr>
-            <td>${user.id}</td>
             <td>${escapeHtml(user.name)}</td>
             <td>${escapeHtml(user.email)}</td>
             <td><span class="badge ${Number(user.active) === 1 ? 'active' : 'inactive'}">${Number(user.active) === 1 ? 'Activo' : 'Inactivo'}</span></td>
@@ -121,7 +130,7 @@ async function loadUsers() {
         }
         renderUsers(data.users);
     } catch (error) {
-        tableBody.innerHTML = '<tr><td colspan="8">Error cargando profesores.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7">Error cargando profesores.</td></tr>';
     }
 }
 
@@ -229,5 +238,7 @@ uploadTeachersForm.addEventListener('submit', async (event) => {
         submitButton.disabled = false;
     }
 });
+
+removeVisibleIdHeader();
 
 loadUsers();
