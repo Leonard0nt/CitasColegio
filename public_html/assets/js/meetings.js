@@ -165,7 +165,7 @@ async function loadMeetings(showLoading = true) {
     isLoadingMeetings = true;
 
     if (showLoading) {
-        tableBody.innerHTML = '<tr><td colspan="5">Cargando reuniones...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6">Cargando reuniones...</td></tr>';
     }
 
     try {
@@ -173,12 +173,12 @@ async function loadMeetings(showLoading = true) {
         const data = await res.json();
 
         if (!data.success) {
-            tableBody.innerHTML = '<tr><td colspan="5">Error al cargar reuniones.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="6">Error al cargar reuniones.</td></tr>';
             return;
         }
 
         if (!data.meetings.length) {
-            tableBody.innerHTML = '<tr><td colspan="5">No hay reuniones agendadas.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="6">No hay reuniones agendadas.</td></tr>';
             return;
         }
 
@@ -194,12 +194,41 @@ async function loadMeetings(showLoading = true) {
             </td>
             <td>${escapeHtml(m.meeting_date)}</td>
             <td>${escapeHtml(formatTime(m.meeting_time))}</td>
+            <td>
+                <div class="actions">
+                    <button class="btn btn-danger btn-small" data-action="delete" data-id="${m.id}">Eliminar</button>
+                </div>
+            </td>
         </tr>
     `).join('');
     } catch (error) {
-        tableBody.innerHTML = '<tr><td colspan="5">Error al cargar reuniones.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6">Error al cargar reuniones.</td></tr>';
     } finally {
         isLoadingMeetings = false;
+    }
+}
+
+async function deleteMeeting(id) {
+    if (!confirm('¿Seguro que deseas eliminar esta reunión?')) return;
+
+    const formData = new FormData();
+    formData.append('id', id);
+
+    try {
+        const res = await fetch('backend/meetings/delete.php', {
+            method: 'POST',
+            body: formData,
+        });
+        const data = await res.json();
+
+        showAlert(data.message || 'Acción realizada.', data.success ? 'success' : 'error');
+
+        if (data.success) {
+            await loadMeetings(false);
+            notifyMeetingsChanged();
+        }
+    } catch (error) {
+        showAlert('Error al eliminar reunión.', 'error');
     }
 }
 
@@ -241,6 +270,15 @@ form?.addEventListener('submit', async (e) => {
         closeModal();
         await loadMeetings(false);
         notifyMeetingsChanged();
+    }
+});
+
+tableBody?.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-action]');
+    if (!button) return;
+
+    if (button.dataset.action === 'delete') {
+        deleteMeeting(button.dataset.id);
     }
 });
 
