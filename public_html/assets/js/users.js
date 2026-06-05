@@ -6,9 +6,6 @@ const userForm = document.getElementById('userForm');
 const openCreateBtn = document.getElementById('openCreateBtn');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const cancelBtn = document.getElementById('cancelBtn');
-const roleSelect = document.getElementById('role');
-const guardianFields = document.getElementById('guardianFields');
-const teacherFields = document.getElementById('teacherFields');
 const uploadModal = document.getElementById('uploadModal');
 const openUploadBtn = document.getElementById('openUploadBtn');
 const closeUploadModalBtn = document.getElementById('closeUploadModalBtn');
@@ -37,7 +34,6 @@ function closeModal() {
     userForm.reset();
     document.getElementById('userId').value = '';
     editing = false;
-    toggleGuardianFields();
 }
 
 function openUploadModal() {
@@ -57,26 +53,11 @@ function setFormUser(user) {
     document.getElementById('userId').value = user.id || '';
     document.getElementById('name').value = user.name || '';
     document.getElementById('email').value = user.email || '';
-    document.getElementById('role').value = user.role || 'alumno';
     document.getElementById('active').value = String(user.active ?? 1);
     document.getElementById('password').value = '';
     document.getElementById('teacher_cost_center').value = user.teacher_cost_center || '';
     document.getElementById('teacher_rut').value = user.teacher_rut || '';
     document.getElementById('teacher_phone').value = user.teacher_phone || '';
-
-    document.getElementById('guardian_name').value = user.guardian_name || '';
-    document.getElementById('guardian_rut').value = user.guardian_rut || '';
-    document.getElementById('guardian_phone').value = user.guardian_phone || '';
-    document.getElementById('guardian_email').value = user.guardian_email || '';
-    document.getElementById('guardian_relationship').value = user.guardian_relationship || '';
-
-    document.getElementById('backup_guardian_name').value = user.backup_guardian_name || '';
-    document.getElementById('backup_guardian_rut').value = user.backup_guardian_rut || '';
-    document.getElementById('backup_guardian_phone').value = user.backup_guardian_phone || '';
-    document.getElementById('backup_guardian_email').value = user.backup_guardian_email || '';
-    document.getElementById('backup_guardian_relationship').value = user.backup_guardian_relationship || '';
-
-    toggleGuardianFields();
 }
 
 async function request(url, formData = null) {
@@ -95,7 +76,7 @@ function renderUsers(users) {
     usersCache = users;
 
     if (!users.length) {
-        tableBody.innerHTML = '<tr><td colspan="11">No hay usuarios registrados.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8">No hay profesores registrados.</td></tr>';
         return;
     }
 
@@ -104,13 +85,10 @@ function renderUsers(users) {
             <td>${user.id}</td>
             <td>${escapeHtml(user.name)}</td>
             <td>${escapeHtml(user.email)}</td>
-            <td><span class="badge ${escapeHtml(user.role)}">${roleLabel(user.role)}</span></td>
             <td><span class="badge ${Number(user.active) === 1 ? 'active' : 'inactive'}">${Number(user.active) === 1 ? 'Activo' : 'Inactivo'}</span></td>
             <td>${teacherAttribute(user, 'teacher_rut')}</td>
             <td>${teacherAttribute(user, 'teacher_cost_center')}</td>
             <td>${teacherAttribute(user, 'teacher_phone')}</td>
-            <td>${guardianSummary(user, false)}</td>
-            <td>${guardianSummary(user, true)}</td>
             <td>
                 <div class="actions">
                     <button class="btn btn-small" data-action="edit" data-id="${user.id}">Editar</button>
@@ -122,34 +100,7 @@ function renderUsers(users) {
 }
 
 function teacherAttribute(user, key) {
-    if (user.role !== 'profesor') return 'No aplica';
-
     return user[key] ? escapeHtml(user[key]) : 'Sin dato';
-}
-
-function guardianSummary(user, backup = false) {
-    if (user.role !== 'alumno') return 'No aplica';
-
-    const name = backup ? user.backup_guardian_name : user.guardian_name;
-    const phone = backup ? user.backup_guardian_phone : user.guardian_phone;
-    const email = backup ? user.backup_guardian_email : user.guardian_email;
-
-    if (!name) return backup ? 'Sin suplente' : 'Sin apoderado';
-
-    return `
-        <div class="guardian-summary">
-            <strong>${escapeHtml(name)}</strong>
-            ${phone ? `<small>${escapeHtml(phone)}</small>` : ''}
-            ${email ? `<small>${escapeHtml(email)}</small>` : ''}
-        </div>
-    `;
-}
-
-function roleLabel(role) {
-    if (role === 'admin') return 'Admin';
-    if (role === 'profesor') return 'Profesor';
-    if (role === 'alumno') return 'Alumno';
-    return escapeHtml(role || '');
 }
 
 function escapeHtml(value) {
@@ -161,36 +112,16 @@ function escapeHtml(value) {
         .replaceAll("'", '&#039;');
 }
 
-function toggleGuardianFields() {
-    if (!roleSelect || !guardianFields || !teacherFields) return;
-
-    const requiredInputs = [document.getElementById('guardian_name')];
-
-    if (roleSelect.value === 'alumno') {
-        guardianFields.classList.remove('hidden');
-        teacherFields.classList.add('hidden');
-        requiredInputs.forEach(input => input && input.setAttribute('required', 'required'));
-    } else if (roleSelect.value === 'profesor') {
-        guardianFields.classList.add('hidden');
-        teacherFields.classList.remove('hidden');
-        requiredInputs.forEach(input => input && input.removeAttribute('required'));
-    } else {
-        guardianFields.classList.add('hidden');
-        teacherFields.classList.add('hidden');
-        requiredInputs.forEach(input => input && input.removeAttribute('required'));
-    }
-}
-
 async function loadUsers() {
     try {
-        const data = await request('backend/users/list.php');
+        const data = await request('backend/users/list.php?role=profesor');
         if (!data.success) {
-            showAlert(data.message || 'No se pudieron cargar los usuarios.', 'error');
+            showAlert(data.message || 'No se pudieron cargar los profesores.', 'error');
             return;
         }
         renderUsers(data.users);
     } catch (error) {
-        tableBody.innerHTML = '<tr><td colspan="11">Error cargando usuarios.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8">Error cargando profesores.</td></tr>';
     }
 }
 
@@ -199,13 +130,13 @@ function editUserById(id) {
     if (!user) return;
 
     editing = true;
-    modalTitle.textContent = 'Editar usuario';
+    modalTitle.textContent = 'Editar profesor';
     setFormUser(user);
     openModal();
 }
 
 async function deleteUser(id) {
-    if (!confirm('¿Seguro que deseas eliminar este usuario?')) return;
+    if (!confirm('¿Seguro que deseas eliminar este profesor?')) return;
 
     const formData = new FormData();
     formData.append('id', id);
@@ -215,7 +146,7 @@ async function deleteUser(id) {
         showAlert(data.message, data.success ? 'success' : 'error');
         if (data.success) loadUsers();
     } catch (error) {
-        showAlert('Error al eliminar usuario.', 'error');
+        showAlert('Error al eliminar profesor.', 'error');
     }
 }
 
@@ -223,10 +154,8 @@ openCreateBtn.addEventListener('click', () => {
     editing = false;
     userForm.reset();
     document.getElementById('userId').value = '';
-    modalTitle.textContent = 'Nuevo usuario';
-    document.getElementById('role').value = 'alumno';
+    modalTitle.textContent = 'Nuevo profesor';
     document.getElementById('active').value = '1';
-    toggleGuardianFields();
     openModal();
 });
 
@@ -244,10 +173,6 @@ uploadModal.addEventListener('click', (event) => {
     if (event.target === uploadModal) closeUploadModal();
 });
 
-if (roleSelect) {
-    roleSelect.addEventListener('change', toggleGuardianFields);
-}
-
 tableBody.addEventListener('click', (event) => {
     const button = event.target.closest('button[data-action]');
     if (!button) return;
@@ -263,6 +188,7 @@ userForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const formData = new FormData(userForm);
+    formData.set('role', 'profesor');
     const url = editing ? 'backend/users/update.php' : 'backend/users/create.php';
 
     try {
@@ -273,7 +199,7 @@ userForm.addEventListener('submit', async (event) => {
             loadUsers();
         }
     } catch (error) {
-        showAlert('Error al guardar usuario.', 'error');
+        showAlert('Error al guardar profesor.', 'error');
     }
 });
 
@@ -308,5 +234,4 @@ uploadTeachersForm.addEventListener('submit', async (event) => {
     }
 });
 
-toggleGuardianFields();
 loadUsers();

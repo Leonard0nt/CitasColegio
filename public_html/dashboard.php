@@ -26,7 +26,8 @@ require_login();
                     <a href="meetings.php">Reuniones</a>
                 <?php endif; ?>
                 <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
-                    <a href="users.php">Usuarios</a>
+                    <a href="users.php">Profesores</a>
+                    <a href="students.php">Alumnos</a>
                 <?php endif; ?>
                 <a href="profile.php">Perfil</a>
                 <a class="btn btn-danger" href="backend/auth/logout.php">Salir</a>
