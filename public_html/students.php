@@ -50,7 +50,6 @@ require_admin();
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Nombre</th>
                             <th>Curso</th>
                             <th>RUT alumno</th>
@@ -61,7 +60,7 @@ require_admin();
                         </tr>
                     </thead>
                     <tbody id="studentsTableBody">
-                        <tr><td colspan="8">Cargando alumnos...</td></tr>
+                        <tr><td colspan="7">Cargando alumnos...</td></tr>
                     </tbody>
                 </table>
             </div>
