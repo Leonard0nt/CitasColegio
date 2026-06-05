@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS meetings (
     guardian_phone VARCHAR(30),
     meeting_date DATE NOT NULL,
     meeting_time TIME NOT NULL,
-    status ENUM('por_atender', 'atendido') NOT NULL DEFAULT 'por_atender',
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -24,6 +23,5 @@ CREATE TABLE IF NOT EXISTS meetings (
         ON DELETE CASCADE,
 
     INDEX idx_meetings_teacher_date (teacher_id, meeting_date, meeting_time),
-    INDEX idx_meetings_student (student_id),
-    INDEX idx_meetings_status (status)
+    INDEX idx_meetings_student (student_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

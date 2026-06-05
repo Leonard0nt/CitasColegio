@@ -82,7 +82,6 @@ CREATE TABLE IF NOT EXISTS meetings (
     guardian_phone VARCHAR(30),
     meeting_date DATE NOT NULL,
     meeting_time TIME NOT NULL,
-    status ENUM('por_atender', 'atendido') NOT NULL DEFAULT 'por_atender',
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -98,20 +97,10 @@ CREATE TABLE IF NOT EXISTS meetings (
         ON DELETE CASCADE,
 
     UNIQUE KEY uniq_meetings_teacher_datetime (teacher_id, meeting_date, meeting_time),
-    INDEX idx_meetings_student (student_id),
-    INDEX idx_meetings_status (status)
+    INDEX idx_meetings_student (student_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
-CREATE TABLE IF NOT EXISTS system_settings (
-    setting_key VARCHAR(80) PRIMARY KEY,
-    setting_value VARCHAR(255) NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO system_settings (setting_key, setting_value)
-VALUES ('attendance_pin', '1234')
-ON DUPLICATE KEY UPDATE setting_value = setting_value;
 
 -- Usuario admin inicial
 -- Email: admin@demo.cl

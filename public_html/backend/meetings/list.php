@@ -12,11 +12,6 @@ require_once __DIR__ . '/../../includes/config-path.php';
 
 try {
 
-    $statusFilter = $_GET['status'] ?? 'all';
-    $allowedStatuses = ['all', 'atendido', 'por_atender'];
-    if (!in_array($statusFilter, $allowedStatuses, true)) {
-        $statusFilter = 'all';
-    }
 
     $sql = "
         SELECT
@@ -31,7 +26,6 @@ try {
             m.guardian_phone,
             m.meeting_date,
             m.meeting_time,
-            m.status,
             m.notes,
             m.created_at
         FROM meetings m
@@ -47,10 +41,6 @@ try {
         $params[':teacher_id'] = (int) $_SESSION['user_id'];
     }
 
-    if ($statusFilter !== 'all') {
-        $conditions[] = 'm.status = :status';
-        $params[':status'] = $statusFilter;
-    }
 
     if ($conditions) {
         $sql .= ' WHERE ' . implode(' AND ', $conditions);
