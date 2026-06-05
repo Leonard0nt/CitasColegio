@@ -11,6 +11,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 
 require_once __DIR__ . '/../../includes/config-path.php';
 require_once __DIR__ . '/teacher-profile-helpers.php';
+require_once __DIR__ . '/encoding-helpers.php';
 
 ensure_teacher_profiles_table($pdo);
 
@@ -61,6 +62,14 @@ $stmt = $pdo->prepare("
 ");
 
 $stmt->execute($params);
-$users = $stmt->fetchAll();
+$users = array_map(static function (array $user): array {
+    foreach (['name', 'email', 'role', 'teacher_cost_center', 'teacher_rut', 'teacher_phone'] as $key) {
+        if (isset($user[$key])) {
+            $user[$key] = repair_text_encoding((string) $user[$key]);
+        }
+    }
+
+    return $user;
+}, $stmt->fetchAll());
 
 echo json_encode(['success' => true, 'users' => $users]);

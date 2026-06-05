@@ -11,6 +11,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 
 require_once __DIR__ . '/../../includes/config-path.php';
 require_once __DIR__ . '/teacher-profile-helpers.php';
+require_once __DIR__ . '/encoding-helpers.php';
 
 function csv_value(array $row, array $aliases): string
 {
@@ -107,69 +108,6 @@ function row_values_changed(array $current, array $incoming): bool
     return false;
 }
 
-function normalize_csv_cell_value(string $value): string
-{
-    $value = preg_replace('/^\xEF\xBB\xBF/', '', $value);
-    $value = str_replace("\xc2\xa0", ' ', (string) $value);
-    $value = repair_utf8_mojibake($value);
-
-    if (function_exists('mb_check_encoding') && !mb_check_encoding($value, 'UTF-8')) {
-        $converted = convert_to_utf8($value, ['Windows-1252', 'ISO-8859-1']);
-        $value = $converted ?? $value;
-    }
-
-    return trim(preg_replace('/\s+/', ' ', $value));
-}
-
-function repair_utf8_mojibake(string $value): string
-{
-    if ($value === '' || preg_match('/(?:Ã|Â|â|ï¿½|�)/u', $value) !== 1) {
-        return $value;
-    }
-
-    if (!function_exists('mb_convert_encoding') || !function_exists('mb_check_encoding')) {
-        return $value;
-    }
-
-    $candidate = @mb_convert_encoding($value, 'Windows-1252', 'UTF-8');
-
-    if ($candidate === false || !mb_check_encoding($candidate, 'UTF-8')) {
-        return $value;
-    }
-
-    return mojibake_score($candidate) < mojibake_score($value) ? $candidate : $value;
-}
-
-function mojibake_score(string $value): int
-{
-    $score = 0;
-
-    foreach (['Ã' => 3, 'Â' => 2, 'â' => 3, 'ï¿½' => 5, '�' => 5] as $fragment => $weight) {
-        $score += substr_count($value, $fragment) * $weight;
-    }
-
-    return $score;
-}
-
-function convert_to_utf8(string $contents, array $encodings): ?string
-{
-    foreach ($encodings as $encoding) {
-        if (function_exists('mb_convert_encoding')) {
-            $converted = @mb_convert_encoding($contents, 'UTF-8', $encoding);
-        } elseif (function_exists('iconv')) {
-            $converted = @iconv($encoding, 'UTF-8//IGNORE', $contents);
-        } else {
-            $converted = false;
-        }
-
-        if ($converted !== false && (!function_exists('mb_check_encoding') || mb_check_encoding($converted, 'UTF-8'))) {
-            return $converted;
-        }
-    }
-
-    return null;
-}
-
 function normalize_header(string $header): string
 {
     $header = normalize_csv_cell_value($header);
@@ -182,26 +120,6 @@ function normalize_header(string $header): string
     $normalized = strtolower($normalized);
     $normalized = preg_replace('/[^a-z0-9]+/', '_', $normalized);
     return trim((string) $normalized, '_');
-}
-
-function normalize_file_encoding(string $contents): string
-{
-    if (function_exists('mb_check_encoding') && mb_check_encoding($contents, 'UTF-8')) {
-        return $contents;
-    }
-
-    $encodings = ['Windows-1252', 'ISO-8859-1'];
-
-    if (function_exists('mb_detect_encoding')) {
-        $encoding = mb_detect_encoding($contents, ['UTF-8', 'Windows-1252', 'ISO-8859-1'], true);
-
-        if ($encoding === 'Windows-1252') {
-            array_unshift($encodings, $encoding);
-            $encodings = array_values(array_unique($encodings));
-        }
-    }
-
-    return convert_to_utf8($contents, $encodings) ?? $contents;
 }
 
 function detect_delimiter(string $headerLine): string
