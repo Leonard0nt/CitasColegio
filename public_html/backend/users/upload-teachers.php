@@ -168,6 +168,51 @@ function rut_to_email_key(string $rut): string
     return $cleanRut !== '' ? $cleanRut : uniqid('profesor_', true);
 }
 
+function database_table_exists(PDO $pdo, string $tableName): bool
+{
+    $stmt = $pdo->prepare(<<<SQL
+        SELECT COUNT(*)
+        FROM information_schema.TABLES
+        WHERE table_schema = DATABASE()
+          AND table_name = :table_name
+SQL);
+    $stmt->execute([':table_name' => $tableName]);
+
+    return (int) $stmt->fetchColumn() > 0;
+}
+
+function clear_previous_teacher_import_records(PDO $pdo): int
+{
+    $stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'profesor'");
+    $deletedTeachers = (int) $stmt->fetchColumn();
+
+    if ($deletedTeachers === 0) {
+        return 0;
+    }
+
+    if (database_table_exists($pdo, 'meetings')) {
+        $pdo->exec("
+            DELETE m
+            FROM meetings m
+            INNER JOIN users u ON u.id = m.teacher_id
+            WHERE u.role = 'profesor'
+        ");
+    }
+
+    if (database_table_exists($pdo, 'teacher_profiles')) {
+        $pdo->exec("
+            DELETE tp
+            FROM teacher_profiles tp
+            INNER JOIN users u ON u.id = tp.user_id
+            WHERE u.role = 'profesor'
+        ");
+    }
+
+    $pdo->exec("DELETE FROM users WHERE role = 'profesor'");
+
+    return $deletedTeachers;
+}
+
 if (!isset($_FILES['teachers_csv']) || !is_uploaded_file($_FILES['teachers_csv']['tmp_name'])) {
     echo json_encode(['success' => false, 'message' => 'Debes seleccionar un archivo CSV.']);
     exit;
@@ -215,6 +260,9 @@ $updated = 0;
 $skipped = 0;
 $errors = [];
 $rowNumber = 1;
+$previousRecordsCleared = false;
+$deletedPreviousTeachers = 0;
+$importedTeacherRuts = [];
 
 try {
     ensure_teacher_profiles_table($pdo);
@@ -328,6 +376,19 @@ try {
             $email = rut_to_email_key($rut) . '@sin-correo.local';
         }
 
+        if (!$previousRecordsCleared) {
+            $deletedPreviousTeachers = clear_previous_teacher_import_records($pdo);
+            $previousRecordsCleared = true;
+        }
+
+        if (isset($importedTeacherRuts[$loginRut])) {
+            $skipped++;
+            $errors[] = "Fila {$rowNumber}: RUT duplicado en el CSV; se omitió para evitar duplicados.";
+            continue;
+        }
+
+        $importedTeacherRuts[$loginRut] = true;
+
         $userId = 0;
         $existingUser = null;
         $findByEmail->execute([':email' => $email]);
@@ -382,7 +443,7 @@ try {
     $pdo->commit();
 
     $hasImportedRows = $created > 0 || $updated > 0 || $skipped === 0;
-    $message = "Carga finalizada: {$created} creados, {$updated} actualizados, {$skipped} omitidos. Los profesores ingresan con su RUT sin puntos ni guion y clave de los últimos 4 dígitos antes del verificador.";
+    $message = "Carga finalizada: {$created} creados, {$updated} actualizados, {$skipped} omitidos. Se eliminaron {$deletedPreviousTeachers} profesores anteriores para evitar duplicados. Los profesores ingresan con su RUT sin puntos ni guion y clave de los últimos 4 dígitos antes del verificador.";
 
     if (!$hasImportedRows) {
         $message = "No se importó ningún profesor: {$skipped} filas fueron omitidas. Revisa los detalles del CSV.";
