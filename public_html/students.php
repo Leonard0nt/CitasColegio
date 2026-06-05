@@ -188,7 +188,7 @@ require_admin();
             <div class="section-header">
                 <div>
                     <h2>Subir alumnos CSV</h2>
-                    <p>Usa las columnas de la planilla: Nombre Curso, Número Rut, Nombre Completo Alumno, Nombre Apoderado, Email Apoderado, Móvil Apoderado, Nombre Apoderado Suplente, Email Apoderado Suplente y Móvil Apoderado Suplente.</p>
+                    <p>Usa columnas: Nombre Curso, Número Rut, Nombre Alumno, Nombre Apoderado, Email/Móvil Apoderado y Nombre/Email/Móvil Suplente.</p>
                 </div>
                 <button class="icon-btn" id="closeUploadModalBtn">×</button>
             </div>

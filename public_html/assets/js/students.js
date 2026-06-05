@@ -234,22 +234,6 @@ studentForm.addEventListener('submit', async (event) => {
 });
 
 
-
-function uploadSummaryHtml(data) {
-    const message = escapeHtml(data.message || 'Proceso terminado.');
-    const errors = Array.isArray(data.errors) ? data.errors : [];
-
-    if (!errors.length) {
-        return message;
-    }
-
-    const items = errors
-        .map(error => `<li>${escapeHtml(error)}</li>`)
-        .join('');
-
-    return `${message}<ul class="upload-errors">${items}</ul>`;
-}
-
 uploadStudentsForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
@@ -262,7 +246,7 @@ uploadStudentsForm.addEventListener('submit', async (event) => {
     try {
         const data = await request('backend/users/upload-students.php', formData);
         uploadResult.className = `info-box ${data.success ? 'success-text' : 'error-text'}`;
-        uploadResult.innerHTML = uploadSummaryHtml(data);
+        uploadResult.textContent = data.message || 'Proceso terminado.';
         showAlert(data.message || 'Carga finalizada.', data.success ? 'success' : 'error');
 
         if (data.success) {
