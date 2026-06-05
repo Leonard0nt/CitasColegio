@@ -84,20 +84,40 @@ try {
     }
 
     $stmtConflict = $pdo->prepare(
-        'SELECT id FROM meetings WHERE teacher_id = :teacher_id AND meeting_date = :meeting_date AND meeting_time = :meeting_time LIMIT 1'
+        "
+        SELECT
+            m.id,
+            t.id AS current_teacher_id,
+            s.id AS current_student_id
+        FROM meetings m
+        LEFT JOIN users t ON t.id = m.teacher_id
+        LEFT JOIN students s ON s.id = m.student_id
+        WHERE m.teacher_id = :teacher_id
+          AND m.meeting_date = :meeting_date
+          AND m.meeting_time = :meeting_time
+        LIMIT 1
+        "
     );
     $stmtConflict->execute([
         ':teacher_id' => $teacherId,
         ':meeting_date' => $meetingDate,
         ':meeting_time' => $meetingTime,
     ]);
+    $conflict = $stmtConflict->fetch();
 
-    if ($stmtConflict->fetch()) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Ya existe una reunión para este profesor en la misma fecha y hora.',
-        ]);
-        exit;
+    if ($conflict) {
+        $hasMissingReference = empty($conflict['current_teacher_id']) || empty($conflict['current_student_id']);
+
+        if ($hasMissingReference) {
+            $stmtDeleteStale = $pdo->prepare('DELETE FROM meetings WHERE id = :id LIMIT 1');
+            $stmtDeleteStale->execute([':id' => (int) $conflict['id']]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Ya existe una reunión para este profesor en la misma fecha y hora.',
+            ]);
+            exit;
+        }
     }
 
     $stmt = $pdo->prepare("
