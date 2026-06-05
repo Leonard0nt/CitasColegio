@@ -11,13 +11,8 @@ const studentSelect = document.getElementById('student_id');
 const guardianTypeSelect = document.getElementById('guardian_type');
 const dateInput = document.getElementById('meeting_date');
 const timeInput = document.getElementById('meeting_time');
-const statusSelect = document.getElementById('status');
 const notesInput = document.getElementById('notes');
-const statusFilter = document.getElementById('statusFilter');
 const isAdmin = window.CURRENT_ROLE === 'admin';
-
-const attendancePinForm = document.getElementById('attendancePinForm');
-const attendancePinInput = document.getElementById('attendancePin');
 
 let options = { teachers: [], students: [] };
 
@@ -34,10 +29,6 @@ function escapeHtml(value) {
         .replaceAll('>', '&gt;')
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#039;');
-}
-
-function statusLabel(status) {
-    return status === 'atendido' ? 'Atendido' : 'Por atender';
 }
 
 function guardianLabel(type) {
@@ -166,20 +157,18 @@ function updateGuardianAvailability() {
 }
 
 async function loadMeetings() {
-    tableBody.innerHTML = '<tr><td colspan="8">Cargando reuniones...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="6">Cargando reuniones...</td></tr>';
 
-    const filterValue = statusFilter?.value || 'all';
-    const query = filterValue === 'all' ? '' : `?status=${encodeURIComponent(filterValue)}`;
-    const res = await fetch(`backend/meetings/list.php${query}`);
+    const res = await fetch('backend/meetings/list.php');
     const data = await res.json();
 
     if (!data.success) {
-        tableBody.innerHTML = '<tr><td colspan="8">Error al cargar reuniones.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6">Error al cargar reuniones.</td></tr>';
         return;
     }
 
     if (!data.meetings.length) {
-        tableBody.innerHTML = '<tr><td colspan="8">No hay reuniones agendadas.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6">No hay reuniones agendadas.</td></tr>';
         return;
     }
 
@@ -196,15 +185,6 @@ async function loadMeetings() {
             </td>
             <td>${escapeHtml(m.meeting_date)}</td>
             <td>${escapeHtml(formatTime(m.meeting_time))}</td>
-            <td><span class="badge ${m.status}">${statusLabel(m.status)}</span></td>
-            <td class="actions-cell">
-                ${isAdmin ? `
-                    <button class="btn btn-small" onclick="toggleStatus(${m.id}, '${m.status === 'atendido' ? 'por_atender' : 'atendido'}')">
-                        ${m.status === 'atendido' ? 'Por atender' : 'Atendido'}
-                    </button>
-                    <button class="btn btn-danger btn-small" onclick="deleteMeeting(${m.id})">Eliminar</button>
-                ` : '<span class="muted">Solo lectura</span>'}
-            </td>
         </tr>
     `).join('');
 }
@@ -214,7 +194,6 @@ function openModal() {
     const today = new Date().toISOString().slice(0, 10);
     dateInput.value = today;
     timeInput.value = '08:00';
-    statusSelect.value = 'por_atender';
     if (courseSelect) courseSelect.value = '';
     populateStudentSelect();
     modal.classList.remove('hidden');
@@ -242,69 +221,10 @@ form?.addEventListener('submit', async (e) => {
     }
 });
 
-async function toggleStatus(id, status) {
-    if (!isAdmin) return;
-    const formData = new FormData();
-    formData.append('id', id);
-    formData.append('status', status);
-
-    const res = await fetch('backend/meetings/update-status.php', {
-        method: 'POST',
-        body: formData,
-    });
-
-    const data = await res.json();
-    showAlert(data.message || 'Estado actualizado.', data.success ? 'success' : 'error');
-    if (data.success) loadMeetings();
-}
-
-async function deleteMeeting(id) {
-    if (!isAdmin) return;
-    if (!confirm('¿Eliminar esta reunión?')) return;
-
-    const formData = new FormData();
-    formData.append('id', id);
-
-    const res = await fetch('backend/meetings/delete.php', {
-        method: 'POST',
-        body: formData,
-    });
-
-    const data = await res.json();
-    showAlert(data.message || 'Reunión eliminada.', data.success ? 'success' : 'error');
-    if (data.success) loadMeetings();
-}
-
 if (openBtn) openBtn.addEventListener('click', openModal);
 if (closeBtn) closeBtn.addEventListener('click', closeModal);
 if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 if (courseSelect) courseSelect.addEventListener('change', populateStudentSelect);
 if (studentSelect) studentSelect.addEventListener('change', updateGuardianAvailability);
-if (statusFilter) statusFilter.addEventListener('change', loadMeetings);
 
 loadOptions().then(loadMeetings);
-
-attendancePinForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const pin = (attendancePinInput.value || '').trim();
-
-    if (!/^\d{4}$/.test(pin)) {
-        showAlert('El PIN debe contener exactamente 4 números.', 'error');
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('pin', pin);
-
-    const res = await fetch('backend/meetings/save-pin.php', {
-        method: 'POST',
-        body: formData,
-    });
-
-    const data = await res.json();
-    showAlert(data.message || 'PIN actualizado.', data.success ? 'success' : 'error');
-
-    if (data.success) {
-        attendancePinForm.reset();
-    }
-});

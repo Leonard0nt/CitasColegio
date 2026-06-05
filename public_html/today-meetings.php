@@ -8,7 +8,6 @@
 </head>
 <body>
     <main class="container page">
-        <div id="alert" class="alert hidden"></div>
         <section class="panel">
             <div class="section-header">
                 <div>
@@ -24,12 +23,10 @@
                             <th>Alumno</th>
                             <th>Apoderado</th>
                             <th>Hora</th>
-                            <th>Estado</th>
-                            <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody id="todayMeetingsBody">
-                        <tr><td colspan="6">Cargando...</td></tr>
+                        <tr><td colspan="4">Cargando...</td></tr>
                     </tbody>
                 </table>
             </div>

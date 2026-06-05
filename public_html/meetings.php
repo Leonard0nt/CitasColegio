@@ -47,14 +47,6 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                 <button class="btn btn-primary" id="openCreateMeetingBtn">Nueva reunión</button>
             </div>
 
-            <div class="form-inline" style="margin-bottom: 1rem;">
-                <label for="statusFilter">Ver reuniones:</label>
-                <select id="statusFilter">
-                    <option value="all">Todas</option>
-                    <option value="atendido">Asistidas</option>
-                    <option value="por_atender">No asistidas</option>
-                </select>
-            </div>
 
             <div class="table-wrapper">
                 <table>
@@ -66,27 +58,15 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                             <th>Apoderado</th>
                             <th>Fecha</th>
                             <th>Hora</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="meetingsTableBody">
-                        <tr><td colspan="8">Cargando reuniones...</td></tr>
+                        <tr><td colspan="6">Cargando reuniones...</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <?php if ($isAdmin): ?>
-            <section class="panel">
-                <h3>PIN de confirmación de asistencia</h3>
-                <p class="muted">Define el PIN de 4 números usado en la vista pública para confirmar asistencia.</p>
-                <form id="attendancePinForm" class="form-inline">
-                    <input type="password" name="pin" id="attendancePin" maxlength="4" pattern="\d{4}" inputmode="numeric" placeholder="1234" required>
-                    <button type="submit" class="btn btn-primary">Guardar PIN</button>
-                </form>
-            </section>
-        <?php endif; ?>
     </main>
 
     <div class="modal hidden" id="meetingModal">
@@ -141,8 +121,6 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                         Hora
                         <input type="time" name="meeting_time" id="meeting_time" required>
                     </label>
-
-                    <input type="hidden" name="status" id="status" value="por_atender">
                 </div>
 
                 <label>
@@ -161,6 +139,6 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
     <script>
         window.CURRENT_ROLE = <?= json_encode($_SESSION['user_role'] ?? '') ?>;
     </script>
-    <script src="assets/js/meetings.js?v=20260605-course-first"></script>
+    <script src="assets/js/meetings.js?v=20260605-no-status"></script>
 </body>
 </html>

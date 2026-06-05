@@ -20,7 +20,6 @@ $studentCourse = trim($_POST['student_course'] ?? '');
 $guardianType = $_POST['guardian_type'] ?? 'titular';
 $meetingDate = trim($_POST['meeting_date'] ?? '');
 $meetingTime = trim($_POST['meeting_time'] ?? '');
-$status = $_POST['status'] ?? 'por_atender';
 $notes = trim($_POST['notes'] ?? '');
 
 if ($teacherId <= 0 || $studentId <= 0 || $studentCourse === '' || $meetingDate === '' || $meetingTime === '') {
@@ -30,11 +29,6 @@ if ($teacherId <= 0 || $studentId <= 0 || $studentCourse === '' || $meetingDate 
 
 if (!in_array($guardianType, ['titular', 'suplente'], true)) {
     echo json_encode(['success' => false, 'message' => 'Tipo de apoderado inválido.']);
-    exit;
-}
-
-if (!in_array($status, ['por_atender', 'atendido'], true)) {
-    echo json_encode(['success' => false, 'message' => 'Estado inválido.']);
     exit;
 }
 
@@ -109,10 +103,10 @@ try {
     $stmt = $pdo->prepare("
         INSERT INTO meetings (
             teacher_id, student_id, guardian_type, guardian_name, guardian_email, guardian_phone,
-            meeting_date, meeting_time, status, notes
+            meeting_date, meeting_time, notes
         ) VALUES (
             :teacher_id, :student_id, :guardian_type, :guardian_name, :guardian_email, :guardian_phone,
-            :meeting_date, :meeting_time, :status, :notes
+            :meeting_date, :meeting_time, :notes
         )
     ");
 
@@ -125,7 +119,6 @@ try {
         ':guardian_phone' => $guardianPhone,
         ':meeting_date' => $meetingDate,
         ':meeting_time' => $meetingTime,
-        ':status' => $status,
         ':notes' => $notes,
     ]);
 
