@@ -250,7 +250,7 @@ try {
 
         $row = array_map(static fn($value) => normalize_csv_cell_value((string) $value), $row);
 
-        $course = csv_value($row, ['nombre_curso', 'curso', 'nombre_del_curso']);
+        $course = csv_value($row, ['nombre_curso', 'curso', 'nombre_del_curso', '']);
         $rut = csv_value($row, ['numero_rut', 'numero_de_rut', 'rut', 'run', 'rut_alumno', 'run_alumno']);
         $name = csv_student_name_value($row);
         $guardianName = csv_value($row, ['nombre_apoderado', 'apoderado', 'nombre_apoderado_titular']);
