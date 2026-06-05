@@ -66,9 +66,36 @@ function detect_delimiter(string $headerLine): string
     return (string) array_key_first($delimiters);
 }
 
+function normalize_rut_login(string $rut): string
+{
+    return strtolower(preg_replace('/[^0-9kK]+/', '', $rut));
+}
+
+function rut_body(string $rut): string
+{
+    $cleanRut = normalize_rut_login($rut);
+
+    if (strlen($cleanRut) < 2) {
+        return '';
+    }
+
+    return substr($cleanRut, 0, -1);
+}
+
+function rut_password(string $rut): string
+{
+    $body = preg_replace('/\D+/', '', rut_body($rut));
+
+    if (strlen($body) < 4) {
+        return '';
+    }
+
+    return substr($body, -4);
+}
+
 function rut_to_email_key(string $rut): string
 {
-    $cleanRut = strtolower(preg_replace('/[^0-9kK]+/', '', $rut));
+    $cleanRut = normalize_rut_login($rut);
     return $cleanRut !== '' ? $cleanRut : uniqid('profesor_', true);
 }
 
@@ -79,13 +106,6 @@ if (!isset($_FILES['teachers_csv']) || !is_uploaded_file($_FILES['teachers_csv']
 
 if (($_FILES['teachers_csv']['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
     echo json_encode(['success' => false, 'message' => 'No se pudo subir el archivo CSV.']);
-    exit;
-}
-
-$defaultPassword = $_POST['default_password'] ?? 'Profesor12345';
-
-if (strlen($defaultPassword) < 8) {
-    echo json_encode(['success' => false, 'message' => 'La contraseña por defecto debe tener mínimo 8 caracteres.']);
     exit;
 }
 
@@ -123,25 +143,23 @@ try {
     $pdo->beginTransaction();
 
     $findByEmail = $pdo->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');
-    $findByRut = $pdo->prepare('
+    $findByRut = $pdo->prepare("
         SELECT u.id
         FROM users u
         INNER JOIN teacher_profiles tp ON tp.user_id = u.id
-        WHERE tp.rut = :rut
+        WHERE LOWER(REPLACE(REPLACE(REPLACE(tp.rut, '.', ''), '-', ''), ' ', '')) = :rut
         LIMIT 1
-    ');
+    ");
     $insertUser = $pdo->prepare('
         INSERT INTO users (name, email, password, role, active)
         VALUES (:name, :email, :password, "profesor", 1)
     ');
     $updateUser = $pdo->prepare('
         UPDATE users
-        SET name = :name, email = :email, role = "profesor", active = 1
+        SET name = :name, email = :email, password = :password, role = "profesor", active = 1
         WHERE id = :id
     ');
     $deleteGuardian = $pdo->prepare('DELETE FROM student_guardians WHERE student_id = :student_id');
-    $passwordHash = password_hash($defaultPassword, PASSWORD_DEFAULT);
-
     while (($data = fgetcsv($handle, 0, $delimiter)) !== false) {
         $rowNumber++;
 
@@ -170,6 +188,15 @@ try {
             continue;
         }
 
+        $loginRut = normalize_rut_login($rut);
+        $initialPassword = rut_password($rut);
+
+        if ($loginRut === '' || $initialPassword === '') {
+            $skipped++;
+            $errors[] = "Fila {$rowNumber}: falta un RUT válido para generar usuario y contraseña.";
+            continue;
+        }
+
         if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $email = '';
         }
@@ -185,7 +212,7 @@ try {
         if ($existingByEmail) {
             $userId = (int) $existingByEmail['id'];
         } elseif ($rut !== '') {
-            $findByRut->execute([':rut' => $rut]);
+            $findByRut->execute([':rut' => $loginRut]);
             $existingByRut = $findByRut->fetch();
             $userId = $existingByRut ? (int) $existingByRut['id'] : 0;
         }
@@ -195,13 +222,14 @@ try {
                 ':id' => $userId,
                 ':name' => $name,
                 ':email' => $email,
+                ':password' => password_hash($initialPassword, PASSWORD_DEFAULT),
             ]);
             $updated++;
         } else {
             $insertUser->execute([
                 ':name' => $name,
                 ':email' => $email,
-                ':password' => $passwordHash,
+                ':password' => password_hash($initialPassword, PASSWORD_DEFAULT),
             ]);
             $userId = (int) $pdo->lastInsertId();
             $created++;
@@ -214,7 +242,7 @@ try {
     fclose($handle);
     $pdo->commit();
 
-    $message = "Carga finalizada: {$created} creados, {$updated} actualizados, {$skipped} omitidos.";
+    $message = "Carga finalizada: {$created} creados, {$updated} actualizados, {$skipped} omitidos. Los profesores ingresan con su RUT sin puntos ni guion y clave de los últimos 4 dígitos antes del verificador.";
     echo json_encode([
         'success' => true,
         'message' => $message,

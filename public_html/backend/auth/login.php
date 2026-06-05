@@ -3,17 +3,32 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/../../includes/config-path.php';
+require_once __DIR__ . '/../users/teacher-profile-helpers.php';
 
-$email = trim($_POST['email'] ?? '');
+ensure_teacher_profiles_table($pdo);
+
+$identifier = trim($_POST['email'] ?? '');
 $password = $_POST['password'] ?? '';
 
-if ($email === '' || $password === '') {
-    echo json_encode(['success' => false, 'message' => 'Correo y contraseña son obligatorios.']);
+if ($identifier === '' || $password === '') {
+    echo json_encode(['success' => false, 'message' => 'Usuario/correo y contraseña son obligatorios.']);
     exit;
 }
 
-$stmt = $pdo->prepare('SELECT id, name, email, password, role, active FROM users WHERE email = :email LIMIT 1');
-$stmt->execute([':email' => $email]);
+$normalizedRut = strtolower(preg_replace('/[^0-9kK]+/', '', $identifier));
+
+$stmt = $pdo->prepare("
+    SELECT u.id, u.name, u.email, u.password, u.role, u.active
+    FROM users u
+    LEFT JOIN teacher_profiles tp ON tp.user_id = u.id
+    WHERE u.email = :identifier
+        OR LOWER(REPLACE(REPLACE(REPLACE(tp.rut, '.', ''), '-', ''), ' ', '')) = :rut
+    LIMIT 1
+");
+$stmt->execute([
+    ':identifier' => $identifier,
+    ':rut' => $normalizedRut,
+]);
 $user = $stmt->fetch();
 
 if (!$user || !password_verify($password, $user['password'])) {
