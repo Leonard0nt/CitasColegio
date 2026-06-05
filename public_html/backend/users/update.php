@@ -10,6 +10,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 }
 
 require_once __DIR__ . '/../../includes/config-path.php';
+require_once __DIR__ . '/teacher-profile-helpers.php';
 
 $id = (int) ($_POST['id'] ?? 0);
 $name = trim($_POST['name'] ?? '');
@@ -34,6 +35,8 @@ if (!in_array($role, ['admin', 'profesor', 'alumno'], true)) {
 }
 
 try {
+    ensure_teacher_profiles_table($pdo);
+
     $pdo->beginTransaction();
 
     if ($password !== '') {
@@ -71,6 +74,18 @@ try {
             ':role' => $role,
             ':active' => $active === 1 ? 1 : 0,
         ]);
+    }
+
+    if ($role === 'profesor') {
+        save_teacher_profile(
+            $pdo,
+            $id,
+            $_POST['teacher_cost_center'] ?? '',
+            $_POST['teacher_rut'] ?? '',
+            $_POST['teacher_phone'] ?? ''
+        );
+    } else {
+        delete_teacher_profile($pdo, $id);
     }
 
     if ($role === 'alumno') {
@@ -149,6 +164,6 @@ try {
 
     echo json_encode([
         'success' => false,
-        'message' => $e->getCode() === '23000' ? 'El correo ya existe.' : 'Error al actualizar usuario.'
+        'message' => $e->getCode() === '23000' ? 'El correo o RUT ya existe.' : 'Error al actualizar usuario.'
     ]);
 }

@@ -10,6 +10,7 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') 
 }
 
 require_once __DIR__ . '/../../includes/config-path.php';
+require_once __DIR__ . '/teacher-profile-helpers.php';
 
 $name = trim($_POST['name'] ?? '');
 $email = trim($_POST['email'] ?? '');
@@ -38,6 +39,8 @@ if (strlen($password) < 8) {
 }
 
 try {
+    ensure_teacher_profiles_table($pdo);
+
     $pdo->beginTransaction();
 
     $stmt = $pdo->prepare('
@@ -54,6 +57,16 @@ try {
     ]);
 
     $userId = (int) $pdo->lastInsertId();
+
+    if ($role === 'profesor') {
+        save_teacher_profile(
+            $pdo,
+            $userId,
+            $_POST['teacher_cost_center'] ?? '',
+            $_POST['teacher_rut'] ?? '',
+            $_POST['teacher_phone'] ?? ''
+        );
+    }
 
     if ($role === 'alumno') {
         $guardianName = trim($_POST['guardian_name'] ?? '');
@@ -117,6 +130,6 @@ try {
 
     echo json_encode([
         'success' => false,
-        'message' => $e->getCode() === '23000' ? 'El correo ya existe.' : 'Error al crear usuario.'
+        'message' => $e->getCode() === '23000' ? 'El correo o RUT ya existe.' : 'Error al crear usuario.'
     ]);
 }
