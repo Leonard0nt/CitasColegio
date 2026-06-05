@@ -85,13 +85,12 @@ function renderStudents(students) {
     studentsCache = students;
 
     if (!students.length) {
-        tableBody.innerHTML = '<tr><td colspan="8">No hay alumnos registrados.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7">No hay alumnos registrados.</td></tr>';
         return;
     }
 
     tableBody.innerHTML = students.map(student => `
         <tr>
-            <td>${student.id}</td>
             <td>${escapeHtml(student.name)}</td>
             <td>${studentAttribute(student, 'student_course')}</td>
             <td>${studentAttribute(student, 'student_rut')}</td>
@@ -168,7 +167,7 @@ async function loadStudents() {
         }
         renderStudents(data.users);
     } catch (error) {
-        tableBody.innerHTML = '<tr><td colspan="8">Error cargando alumnos.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7">Error cargando alumnos.</td></tr>';
     }
 }
 
