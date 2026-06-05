@@ -9,6 +9,7 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['ad
 }
 
 require_once __DIR__ . '/../../includes/config-path.php';
+require_once __DIR__ . '/schema-helpers.php';
 
 $loggedRole = $_SESSION['user_role'] ?? '';
 $loggedUserId = (int) ($_SESSION['user_id'] ?? 0);
@@ -33,6 +34,8 @@ if (!in_array($guardianType, ['titular', 'suplente'], true)) {
 }
 
 try {
+    ensure_meetings_student_foreign_key($pdo);
+
     $stmtTeacher = $pdo->prepare("SELECT id FROM users WHERE id = :id AND role = 'profesor' AND active = 1 LIMIT 1");
     $stmtTeacher->execute([':id' => $teacherId]);
     if (!$stmtTeacher->fetch()) {
@@ -144,10 +147,20 @@ try {
 
     echo json_encode(['success' => true, 'message' => 'Reunión agendada correctamente.']);
 } catch (PDOException $e) {
-    if ((string) $e->getCode() === '23000') {
+    $driverErrorCode = (int) ($e->errorInfo[1] ?? 0);
+
+    if ((string) $e->getCode() === '23000' && $driverErrorCode === 1062) {
         echo json_encode([
             'success' => false,
             'message' => 'No se puede agendar: ya existe una reunión para este profesor en la misma fecha y hora.',
+        ]);
+        exit;
+    }
+
+    if ((string) $e->getCode() === '23000' && in_array($driverErrorCode, [1451, 1452], true)) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'No se puede agendar: revisa que el profesor y el alumno seleccionados sigan existiendo.',
         ]);
         exit;
     }
