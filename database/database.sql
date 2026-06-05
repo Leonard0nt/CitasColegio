@@ -1,4 +1,27 @@
-CREATE TABLE IF NOT EXISTS users (
+-- Base de datos completa para CitasColegio.
+-- Importar este archivo directamente desde phpMyAdmin/cPanel en una base de datos vacía
+-- o en una base que quieras reiniciar por completo.
+--
+-- Credenciales iniciales:
+--   Email: admin@demo.cl
+--   Password: Admin12345
+--
+-- IMPORTANTE: este script elimina las tablas del sistema antes de crearlas nuevamente.
+
+SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';
+SET time_zone = '+00:00';
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS meetings;
+DROP TABLE IF EXISTS student_guardians;
+DROP TABLE IF EXISTS teacher_profiles;
+DROP TABLE IF EXISTS students;
+DROP TABLE IF EXISTS users;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
@@ -9,8 +32,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
-CREATE TABLE IF NOT EXISTS teacher_profiles (
+CREATE TABLE teacher_profiles (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     cost_center VARCHAR(120),
@@ -28,8 +50,7 @@ CREATE TABLE IF NOT EXISTS teacher_profiles (
     UNIQUE KEY unique_teacher_profile_rut (rut)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
-CREATE TABLE IF NOT EXISTS students (
+CREATE TABLE students (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
     active TINYINT(1) NOT NULL DEFAULT 1,
@@ -43,7 +64,7 @@ CREATE TABLE IF NOT EXISTS students (
     INDEX idx_students_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS student_guardians (
+CREATE TABLE student_guardians (
     id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
 
@@ -70,9 +91,7 @@ CREATE TABLE IF NOT EXISTS student_guardians (
     UNIQUE KEY unique_student_guardian (student_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
-
-CREATE TABLE IF NOT EXISTS meetings (
+CREATE TABLE meetings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     teacher_id INT NOT NULL,
     student_id INT NOT NULL,
@@ -100,11 +119,6 @@ CREATE TABLE IF NOT EXISTS meetings (
     INDEX idx_meetings_student (student_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
-
--- Usuario admin inicial
--- Email: admin@demo.cl
--- Password: Admin12345
 INSERT INTO users (name, email, password, role, active)
 VALUES (
     'Administrador',
@@ -112,5 +126,4 @@ VALUES (
     '$2y$12$NyY704Zok7I1Z0c.EU1gaumeJijxkQn5U2Y.Yb0tuSzPAOH.5Jw2e',
     'admin',
     1
-)
-ON DUPLICATE KEY UPDATE email = email;
+);
