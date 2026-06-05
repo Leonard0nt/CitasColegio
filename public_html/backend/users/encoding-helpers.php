@@ -208,6 +208,21 @@ function convert_encoding_to_utf8(string $contents, string $encoding): ?string
     return null;
 }
 
+
+function extract_csv_metadata_directive(string $contents): array
+{
+    $normalizedContents = preg_replace('/^\xEF\xBB\xBF/', '', $contents);
+    $lines = preg_split('/\R/u', $normalizedContents, 2);
+    $firstLine = normalize_csv_cell_value($lines[0] ?? '');
+
+    if (preg_match('/^sep=(?<delimiter>[,;\t|])$/i', $firstLine, $matches) !== 1) {
+        return [$contents, null];
+    }
+
+    $delimiter = $matches['delimiter'] === '\t' ? "\t" : $matches['delimiter'];
+    return [$lines[1] ?? '', $delimiter];
+}
+
 function normalize_file_encoding(string $contents): string
 {
     if (function_exists('mb_check_encoding') && mb_check_encoding($contents, 'UTF-8')) {

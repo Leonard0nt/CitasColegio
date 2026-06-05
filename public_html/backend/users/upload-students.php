@@ -139,9 +139,16 @@ if ($contents === false || trim($contents) === '') {
 }
 
 $contents = normalize_file_encoding($contents);
+[$contents, $metadataDelimiter] = extract_csv_metadata_directive($contents);
+
+if (trim($contents) === '') {
+    echo json_encode(['success' => false, 'message' => 'El archivo CSV no contiene datos después de la directiva sep=.']);
+    exit;
+}
+
 $lines = preg_split('/\R/u', trim($contents));
 $firstLine = $lines[0] ?? '';
-$delimiter = detect_delimiter($firstLine);
+$delimiter = $metadataDelimiter ?? detect_delimiter($firstLine);
 $handle = fopen('php://temp', 'r+');
 fwrite($handle, $contents);
 rewind($handle);
@@ -363,9 +370,15 @@ try {
     fclose($handle);
     $pdo->commit();
 
+    $hasImportedRows = $created > 0 || $updated > 0 || $skipped === 0;
     $message = "Carga finalizada: {$created} creados, {$updated} actualizados, {$skipped} omitidos. Los alumnos ingresan con su RUT sin puntos ni guion y clave de los últimos 4 dígitos antes del verificador.";
+
+    if (!$hasImportedRows) {
+        $message = "No se importó ningún alumno: {$skipped} filas fueron omitidas. Revisa los detalles del CSV.";
+    }
+
     echo json_encode([
-        'success' => true,
+        'success' => $hasImportedRows,
         'message' => $message,
         'created' => $created,
         'updated' => $updated,
