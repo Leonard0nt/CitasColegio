@@ -213,7 +213,7 @@ try {
         $email = strtolower(csv_value($row, ['email', 'correo', 'e_mail']));
         $rut = csv_value($row, ['rut', 'run']);
         $costCenter = csv_value($row, ['centro_costo', 'centro_de_costo', 'centro_costos', 'centro_de_costos', 'centro_coste', 'ceco']);
-        $phone = csv_value($row, ['movil', 'mobile', 'telefono', 'fono', 'celular', 'numero', 'numero_telefono', 'numero_de_telefono', 'telefono_movil', 'telefono_celular']);
+        $phone = csv_value($row, ['movil', 'm_vil', 'mobile', 'telefono', 'fono', 'celular', 'numero', 'numero_telefono', 'numero_de_telefono', 'telefono_movil', 'telefono_celular']);
 
         if ($name === '') {
             $skipped++;
