@@ -483,3 +483,73 @@ textarea {
 .upload-errors li + li {
     margin-top: 0.25rem;
 }
+
+.teacher-contact-button {
+    border: 0;
+    background: transparent;
+    color: green;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+    padding: 0;
+    text-align: left;
+}
+
+.teacher-contact-button:hover,
+.teacher-contact-button:focus-visible {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+.teacher-contact-button:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, 0.25);
+    outline-offset: 3px;
+    border-radius: 6px;
+}
+
+.teacher-contact-card {
+    width: min(560px, 100%);
+}
+
+.contact-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.contact-detail {
+    display: grid;
+    gap: 6px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #f9fafb;
+}
+
+.contact-detail-full {
+    grid-column: 1 / -1;
+}
+
+.contact-detail span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.contact-detail strong,
+.contact-detail a {
+    overflow-wrap: anywhere;
+}
+
+.disabled-contact-link {
+    color: var(--muted);
+    cursor: default;
+    pointer-events: none;
+}
+
+@media (max-width: 720px) {
+    .contact-details {
+        grid-template-columns: 1fr;
+    }
+}
