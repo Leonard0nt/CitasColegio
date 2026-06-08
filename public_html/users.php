@@ -46,6 +46,20 @@ require_admin();
                 </div>
             </div>
 
+            <div class="teachers-toolbar" aria-label="Buscador de profesores">
+                <label for="teacherSearch">Buscar profesor</label>
+                <div class="search-control">
+                    <input
+                        type="search"
+                        id="teacherSearch"
+                        placeholder="Nombre, correo, RUT, centro de costo o móvil"
+                        autocomplete="off"
+                    >
+                    <button class="btn btn-small hidden" type="button" id="clearTeacherSearchBtn">Limpiar</button>
+                </div>
+                <p class="muted small-text" id="teacherSearchSummary" aria-live="polite">Mostrando todos los profesores.</p>
+            </div>
+
             <div class="table-wrapper">
                 <table>
                     <thead>
@@ -160,6 +174,6 @@ require_admin();
         </div>
     </div>
 
-    <script src="assets/js/users.js?v=20260605-id-column"></script>
+    <script src="assets/js/users.js?v=20260608-teacher-search"></script>
 </body>
 </html>

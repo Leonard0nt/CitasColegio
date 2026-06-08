@@ -12,6 +12,9 @@ const closeUploadModalBtn = document.getElementById('closeUploadModalBtn');
 const cancelUploadBtn = document.getElementById('cancelUploadBtn');
 const uploadTeachersForm = document.getElementById('uploadTeachersForm');
 const uploadResult = document.getElementById('uploadResult');
+const teacherSearch = document.getElementById('teacherSearch');
+const clearTeacherSearchBtn = document.getElementById('clearTeacherSearchBtn');
+const teacherSearchSummary = document.getElementById('teacherSearchSummary');
 
 function removeVisibleIdHeader() {
     const firstHeader = tableBody
@@ -25,6 +28,7 @@ function removeVisibleIdHeader() {
 
 let editing = false;
 let usersCache = [];
+let filteredUsersCache = [];
 
 function showAlert(message, type = 'success') {
     alertBox.textContent = message;
@@ -83,10 +87,11 @@ async function request(url, formData = null) {
 }
 
 function renderUsers(users) {
-    usersCache = users;
+    filteredUsersCache = users;
 
     if (!users.length) {
-        tableBody.innerHTML = '<tr><td colspan="7">No hay profesores registrados.</td></tr>';
+        const hasSearch = Boolean(getTeacherSearchTerm());
+        tableBody.innerHTML = `<tr><td colspan="7">${hasSearch ? 'No se encontraron profesores para la búsqueda ingresada.' : 'No hay profesores registrados.'}</td></tr>`;
         return;
     }
 
@@ -112,6 +117,49 @@ function teacherAttribute(user, key) {
     return user[key] ? escapeHtml(user[key]) : 'Sin dato';
 }
 
+function normalizeSearchText(value) {
+    return String(value ?? '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+}
+
+function getTeacherSearchTerm() {
+    return normalizeSearchText(teacherSearch?.value.trim());
+}
+
+function getTeacherSearchHaystack(user) {
+    return normalizeSearchText([
+        user.name,
+        user.email,
+        Number(user.active) === 1 ? 'activo' : 'inactivo',
+        user.teacher_rut,
+        user.teacher_cost_center,
+        user.teacher_phone
+    ].join(' '));
+}
+
+function updateTeacherSearchSummary(visibleCount, totalCount) {
+    if (!teacherSearchSummary) return;
+
+    const hasSearch = Boolean(getTeacherSearchTerm());
+    teacherSearchSummary.textContent = hasSearch
+        ? `Mostrando ${visibleCount} de ${totalCount} profesores.`
+        : `Mostrando ${totalCount} ${totalCount === 1 ? 'profesor' : 'profesores'}.`;
+
+    clearTeacherSearchBtn?.classList.toggle('hidden', !hasSearch);
+}
+
+function applyTeacherSearch() {
+    const searchTerm = getTeacherSearchTerm();
+    const filteredUsers = searchTerm
+        ? usersCache.filter(user => getTeacherSearchHaystack(user).includes(searchTerm))
+        : usersCache;
+
+    renderUsers(filteredUsers);
+    updateTeacherSearchSummary(filteredUsers.length, usersCache.length);
+}
+
 function escapeHtml(value) {
     return String(value ?? '')
         .replaceAll('&', '&amp;')
@@ -128,7 +176,8 @@ async function loadUsers() {
             showAlert(data.message || 'No se pudieron cargar los profesores.', 'error');
             return;
         }
-        renderUsers(data.users);
+        usersCache = data.users;
+        applyTeacherSearch();
     } catch (error) {
         tableBody.innerHTML = '<tr><td colspan="7">Error cargando profesores.</td></tr>';
     }
@@ -173,6 +222,12 @@ cancelBtn.addEventListener('click', closeModal);
 openUploadBtn.addEventListener('click', openUploadModal);
 closeUploadModalBtn.addEventListener('click', closeUploadModal);
 cancelUploadBtn.addEventListener('click', closeUploadModal);
+teacherSearch?.addEventListener('input', applyTeacherSearch);
+clearTeacherSearchBtn?.addEventListener('click', () => {
+    teacherSearch.value = '';
+    teacherSearch.focus();
+    applyTeacherSearch();
+});
 
 modal.addEventListener('click', (event) => {
     if (event.target === modal) closeModal();
