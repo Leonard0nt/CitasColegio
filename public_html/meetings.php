@@ -136,9 +136,40 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
         </div>
     </div>
 
+    <div class="modal hidden" id="teacherContactModal">
+        <div class="modal-card teacher-contact-card">
+            <div class="section-header">
+                <div>
+                    <h2>Datos del profesor</h2>
+                    <p>Contacto para avisar que llegó el apoderado.</p>
+                </div>
+                <button class="icon-btn" id="closeTeacherContactModalBtn" aria-label="Cerrar datos del profesor">×</button>
+            </div>
+
+            <div class="contact-details">
+                <div class="contact-detail contact-detail-full">
+                    <span>Profesor</span>
+                    <strong id="teacherContactName">-</strong>
+                </div>
+                <div class="contact-detail">
+                    <span>Correo</span>
+                    <a id="teacherContactEmail" href="#">No registrado</a>
+                </div>
+                <div class="contact-detail">
+                    <span>Teléfono</span>
+                    <a id="teacherContactPhone" href="#">No registrado</a>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn" id="closeTeacherContactModalActionBtn">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         window.CURRENT_ROLE = <?= json_encode($_SESSION['user_role'] ?? '') ?>;
     </script>
-    <script src="assets/js/meetings.js?v=20260605-delete-action"></script>
+    <script src="assets/js/meetings.js?v=20260608-teacher-contact"></script>
 </body>
 </html>

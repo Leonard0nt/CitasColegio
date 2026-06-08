@@ -1,10 +1,16 @@
 const tableBody = document.getElementById('meetingsTableBody');
 const alertBox = document.getElementById('alert');
 const modal = document.getElementById('meetingModal');
+const teacherContactModal = document.getElementById('teacherContactModal');
 const form = document.getElementById('meetingForm');
 const openBtn = document.getElementById('openCreateMeetingBtn');
 const closeBtn = document.getElementById('closeMeetingModalBtn');
 const cancelBtn = document.getElementById('cancelMeetingBtn');
+const closeTeacherContactModalBtn = document.getElementById('closeTeacherContactModalBtn');
+const closeTeacherContactModalActionBtn = document.getElementById('closeTeacherContactModalActionBtn');
+const teacherContactName = document.getElementById('teacherContactName');
+const teacherContactEmail = document.getElementById('teacherContactEmail');
+const teacherContactPhone = document.getElementById('teacherContactPhone');
 const teacherSelect = document.getElementById('teacher_id');
 const courseSelect = document.getElementById('student_course');
 const studentSelect = document.getElementById('student_id');
@@ -40,6 +46,19 @@ function guardianLabel(type) {
 
 function formatTime(time) {
     return String(time || '').slice(0, 5);
+}
+
+function emptyContactLabel(value) {
+    return String(value || '').trim() || 'No registrado';
+}
+
+function contactHref(type, value) {
+    const cleanedValue = String(value || '').trim();
+    if (!cleanedValue) return '#';
+
+    if (type === 'email') return `mailto:${cleanedValue}`;
+
+    return `tel:${cleanedValue.replace(/[^+\d]/g, '')}`;
 }
 
 function normalizeCourse(course) {
@@ -184,7 +203,19 @@ async function loadMeetings(showLoading = true) {
 
         tableBody.innerHTML = data.meetings.map(m => `
         <tr>
-            <td>${escapeHtml(m.teacher_name)}</td>
+            <td>
+                <button
+                    type="button"
+                    class="teacher-contact-button"
+                    data-action="teacher-contact"
+                    data-name="${escapeHtml(m.teacher_name)}"
+                    data-email="${escapeHtml(m.teacher_email)}"
+                    data-phone="${escapeHtml(m.teacher_phone)}"
+                    title="Ver correo y teléfono del profesor"
+                >
+                    ${escapeHtml(m.teacher_name)}
+                </button>
+            </td>
             <td>${escapeHtml(m.student_name)}</td>
             <td>
                 <div class="guardian-summary">
@@ -254,6 +285,31 @@ function closeModal() {
     modal.classList.add('hidden');
 }
 
+function openTeacherContactModal({ name, email, phone }) {
+    if (!teacherContactModal) return;
+
+    const teacherName = emptyContactLabel(name);
+    const teacherEmail = String(email || '').trim();
+    const teacherPhone = String(phone || '').trim();
+
+    teacherContactName.textContent = teacherName;
+    teacherContactEmail.textContent = emptyContactLabel(teacherEmail);
+    teacherContactEmail.href = contactHref('email', teacherEmail);
+    teacherContactEmail.classList.toggle('disabled-contact-link', !teacherEmail);
+    teacherContactEmail.setAttribute('aria-disabled', teacherEmail ? 'false' : 'true');
+
+    teacherContactPhone.textContent = emptyContactLabel(teacherPhone);
+    teacherContactPhone.href = contactHref('phone', teacherPhone);
+    teacherContactPhone.classList.toggle('disabled-contact-link', !teacherPhone);
+    teacherContactPhone.setAttribute('aria-disabled', teacherPhone ? 'false' : 'true');
+
+    teacherContactModal.classList.remove('hidden');
+}
+
+function closeTeacherContactModal() {
+    teacherContactModal?.classList.add('hidden');
+}
+
 form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
@@ -279,12 +335,23 @@ tableBody?.addEventListener('click', (event) => {
 
     if (button.dataset.action === 'delete') {
         deleteMeeting(button.dataset.id);
+        return;
+    }
+
+    if (button.dataset.action === 'teacher-contact') {
+        openTeacherContactModal({
+            name: button.dataset.name,
+            email: button.dataset.email,
+            phone: button.dataset.phone,
+        });
     }
 });
 
 if (openBtn) openBtn.addEventListener('click', openModal);
 if (closeBtn) closeBtn.addEventListener('click', closeModal);
 if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+if (closeTeacherContactModalBtn) closeTeacherContactModalBtn.addEventListener('click', closeTeacherContactModal);
+if (closeTeacherContactModalActionBtn) closeTeacherContactModalActionBtn.addEventListener('click', closeTeacherContactModal);
 if (courseSelect) courseSelect.addEventListener('change', populateStudentSelect);
 if (studentSelect) studentSelect.addEventListener('change', updateGuardianAvailability);
 

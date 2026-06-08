@@ -9,15 +9,18 @@ if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['ad
 }
 
 require_once __DIR__ . '/../../includes/config-path.php';
+require_once __DIR__ . '/../users/teacher-profile-helpers.php';
 
 try {
-
+    ensure_teacher_profiles_table($pdo);
 
     $sql = "
         SELECT
             m.id,
             m.teacher_id,
             COALESCE(t.name, 'Profesor eliminado') AS teacher_name,
+            t.email AS teacher_email,
+            tp.phone AS teacher_phone,
             m.student_id,
             COALESCE(s.name, 'Alumno eliminado') AS student_name,
             m.guardian_type,
@@ -30,6 +33,7 @@ try {
             m.created_at
         FROM meetings m
         LEFT JOIN users t ON t.id = m.teacher_id
+        LEFT JOIN teacher_profiles tp ON tp.user_id = t.id
         LEFT JOIN students s ON s.id = m.student_id
     ";
 
