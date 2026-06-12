@@ -10,6 +10,8 @@
 --   Email: admin@demo.cl
 --   Password: Admin12345
 --
+-- Recomendacion: cambia esta password inmediatamente despues del primer ingreso.
+--
 -- IMPORTANTE: este script elimina las tablas del sistema antes de crearlas nuevamente.
 
 SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';
