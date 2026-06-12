@@ -11,7 +11,7 @@ if (is_logged_in()) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/styles.css?v=<?= filemtime(__DIR__ . '/assets/css/styles.css') ?>">
 </head>
 <body class="auth-body">
     <main class="auth-card">
@@ -31,15 +31,26 @@ if (is_logged_in()) {
                 <input type="text" name="email" placeholder="" required>
             </label>
 
-            <label>
-                Contraseña
-                <input type="password" name="password" placeholder="" required>
-            </label>
+            <div class="form-field">
+                <label for="loginPassword">Contraseña</label>
+                <div class="password-field">
+                    <input id="loginPassword" type="password" name="password" placeholder="" required>
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        data-password-toggle="loginPassword"
+                        aria-label="Mostrar contraseña"
+                        aria-pressed="false"
+                    >
+                        Mostrar
+                    </button>
+                </div>
+            </div>
 
             <button type="submit" class="btn btn-primary">Entrar</button>
         </form>
     </main>
 
-    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/auth.js?v=<?= filemtime(__DIR__ . '/assets/js/auth.js') ?>"></script>
 </body>
 </html>
