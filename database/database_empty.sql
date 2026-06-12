@@ -2,8 +2,13 @@
 -- Importar este archivo desde phpMyAdmin/cPanel cuando necesites crear
 -- una base lista para cargar datos mas adelante.
 --
--- Este script crea solo la estructura del proyecto: no inserta usuarios,
--- profesores, estudiantes, apoderados ni reuniones.
+-- Este script crea la estructura del proyecto e inserta solo el usuario
+-- administrador minimo para poder ingresar al sistema.
+-- No inserta profesores, estudiantes, apoderados ni reuniones.
+--
+-- Credenciales iniciales:
+--   Email: admin@demo.cl
+--   Password: Admin12345
 --
 -- IMPORTANTE: este script elimina las tablas del sistema antes de crearlas nuevamente.
 
@@ -117,3 +122,12 @@ CREATE TABLE meetings (
     UNIQUE KEY uniq_meetings_teacher_datetime (teacher_id, meeting_date, meeting_time),
     INDEX idx_meetings_student (student_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO users (name, email, password, role, active)
+VALUES (
+    'Administrador',
+    'admin@demo.cl',
+    '$2y$12$NyY704Zok7I1Z0c.EU1gaumeJijxkQn5U2Y.Yb0tuSzPAOH.5Jw2e',
+    'admin',
+    1
+);
