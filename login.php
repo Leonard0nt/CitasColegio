@@ -16,7 +16,7 @@ if (is_logged_in()) {
 <body class="auth-body">
     <main class="auth-card">
         <div class="brand">
-            <div class="brand-logo">U</div>
+            <img src="https://csfchillan.cl/images/0/11526939/HojaA4DiaDelNinoIlustradaAmarilla1.png" alt="Logo" class="logo">
             <div>
                 <h1>Iniciar sesión</h1>
                 <p>Sistema de registro de reuniones o citas</p>
@@ -28,7 +28,7 @@ if (is_logged_in()) {
         <form id="loginForm" class="form">
             <label>
                 Rut
-                <input type="text" name="email" placeholder="202677541" required>
+                <input type="text" name="email" placeholder="" required>
             </label>
 
             <label>
