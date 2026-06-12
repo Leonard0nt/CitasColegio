@@ -19,7 +19,7 @@ if (is_logged_in()) {
             <div class="brand-logo">U</div>
             <div>
                 <h1>Iniciar sesión</h1>
-                <p>Sistema de registro de reuniones</p>
+                <p>Sistema de registro de reuniones o citas</p>
             </div>
         </div>
 
@@ -27,18 +27,17 @@ if (is_logged_in()) {
 
         <form id="loginForm" class="form">
             <label>
-                Usuario o correo
-                <input type="text" name="email" placeholder="admin@demo.cl o 202677541" required>
+                Rut
+                <input type="text" name="email" placeholder="202677541" required>
             </label>
 
             <label>
                 Contraseña
-                <input type="password" name="password" placeholder="Admin12345" required>
+                <input type="password" name="password" placeholder="" required>
             </label>
 
             <button type="submit" class="btn btn-primary">Entrar</button>
         </form>
-        <p class="demo-box">Demo admin: <strong>admin@demo.cl</strong> / <strong>Admin12345</strong>. Profesores CSV: RUT sin puntos ni guion / últimos 4 dígitos antes del verificador. Los alumnos no inician sesión.</p>
     </main>
 
     <script src="assets/js/auth.js"></script>

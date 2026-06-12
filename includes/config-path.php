@@ -5,4 +5,4 @@
 // /home/usuario/config/database.php
 // /home/usuario/public_html/includes/config-path.php
 
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../config/database.php';

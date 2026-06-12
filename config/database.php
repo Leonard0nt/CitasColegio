@@ -5,9 +5,9 @@
 // Ejemplo: /home/usuario_cpanel/config/database.php
 
 $host = getenv('DB_HOST') ?: 'localhost';
-$dbname = getenv('DB_NAME') ?: 'php_users_backend';
-$username = getenv('DB_USER') ?: 'phpuser';
-$password = getenv('DB_PASS') ?: '123456';
+$dbname = getenv('DB_NAME') ?: 'csfchill_CitasCsf';
+$username = getenv('DB_USER') ?: 'csfchill_CitasUser';
+$password = getenv('DB_PASS') ?: 'Csanfernando.2026';
 try {
     $pdo = new PDO(
         "mysql:host={$host};dbname={$dbname};charset=utf8mb4",
