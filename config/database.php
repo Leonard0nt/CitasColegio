@@ -34,10 +34,10 @@ try {
     if (stripos($contentType, 'application/json') !== false) {
         echo json_encode([
             'success' => false,
-            'message' => 'No se pudo conectar a la base de datos. Revisa la configuración DB_HOST, DB_NAME, DB_USER y DB_PASS.',
+            'message' => 'No se pudo completar la solicitud. Inténtalo nuevamente o contacta al administrador.',
         ]);
         exit;
     }
 
-    die('Error de conexión a la base de datos.');
+    die('No se pudo completar la solicitud. Inténtalo nuevamente o contacta al administrador.');
 }

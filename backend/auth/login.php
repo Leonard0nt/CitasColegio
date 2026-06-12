@@ -39,7 +39,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Error interno al iniciar sesión. Revisa la conexión y la estructura de la base de datos.',
+        'message' => 'Error interno al iniciar sesión. Inténtalo nuevamente o contacta al administrador.',
     ]);
     exit;
 }
