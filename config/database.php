@@ -20,9 +20,24 @@ try {
         ]
     );
 } catch (PDOException $e) {
+    error_log('DB connection error: ' . $e->getMessage());
     http_response_code(500);
-    die('Error de conexión a la base de datos.');
-    if (PHP_SAPI === 'cli-server') {
-        error_log('DB connection error: ' . $e->getMessage());
+
+    $contentType = '';
+    foreach (headers_list() as $header) {
+        if (stripos($header, 'Content-Type:') === 0) {
+            $contentType = $header;
+            break;
+        }
     }
+
+    if (stripos($contentType, 'application/json') !== false) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'No se pudo conectar a la base de datos. Revisa la configuración DB_HOST, DB_NAME, DB_USER y DB_PASS.',
+        ]);
+        exit;
+    }
+
+    die('Error de conexión a la base de datos.');
 }
