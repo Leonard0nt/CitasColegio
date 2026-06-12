@@ -33,7 +33,18 @@ if (is_logged_in()) {
 
             <label>
                 Contraseña
-                <input type="password" name="password" placeholder="" required>
+                <span class="password-field">
+                    <input id="loginPassword" type="password" name="password" placeholder="" required>
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        data-password-toggle="loginPassword"
+                        aria-label="Mostrar contraseña"
+                        aria-pressed="false"
+                    >
+                        Mostrar
+                    </button>
+                </span>
             </label>
 
             <button type="submit" class="btn btn-primary">Entrar</button>
