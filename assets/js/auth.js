@@ -17,19 +17,28 @@ async function submitForm(url, form) {
     return response.json();
 }
 
-const passwordToggleButtons = document.querySelectorAll('[data-password-toggle]');
-passwordToggleButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-        const input = document.getElementById(button.dataset.passwordToggle);
-        if (!input) return;
+function initializePasswordToggles() {
+    const passwordToggleButtons = document.querySelectorAll('[data-password-toggle]');
 
-        const shouldShowPassword = input.type === 'password';
-        input.type = shouldShowPassword ? 'text' : 'password';
-        button.textContent = shouldShowPassword ? 'Ocultar' : 'Mostrar';
-        button.setAttribute('aria-label', `${shouldShowPassword ? 'Ocultar' : 'Mostrar'} contraseña`);
-        button.setAttribute('aria-pressed', String(shouldShowPassword));
+    passwordToggleButtons.forEach((button) => {
+        button.addEventListener('mousedown', (event) => {
+            event.preventDefault();
+        });
+
+        button.addEventListener('click', () => {
+            const input = document.getElementById(button.dataset.passwordToggle);
+            if (!input) return;
+
+            const shouldShowPassword = input.type === 'password';
+            input.type = shouldShowPassword ? 'text' : 'password';
+            button.textContent = shouldShowPassword ? 'Ocultar' : 'Mostrar';
+            button.setAttribute('aria-label', `${shouldShowPassword ? 'Ocultar' : 'Mostrar'} contraseña`);
+            button.setAttribute('aria-pressed', String(shouldShowPassword));
+        });
     });
-});
+}
+
+initializePasswordToggles();
 
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {

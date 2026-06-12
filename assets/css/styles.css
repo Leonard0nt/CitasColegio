@@ -94,9 +94,12 @@ a:hover { text-decoration: underline; }
     gap: 16px;
 }
 
-label {
+label, .form-field {
     display: grid;
     gap: 7px;
+}
+
+label {
     font-size: 14px;
     font-weight: 700;
 }
