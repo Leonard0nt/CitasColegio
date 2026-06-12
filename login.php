@@ -13,10 +13,21 @@ if (is_logged_in()) {
     <title>Login</title>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
+<style>
+    img.logo {
+        background-color: #f8f9fa;
+        border-radius: 50%;
+        padding: 10px;
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        margin-right: 20px;
+    }
+</style>
 <body class="auth-body">
     <main class="auth-card">
         <div class="brand">
-            <img src="https://csfchillan.cl/images/0/11526939/HojaA4DiaDelNinoIlustradaAmarilla1.png" alt="Logo" class="logo">
+            <img class="logo" src="https://csfchillan.cl/images/0/11526939/HojaA4DiaDelNinoIlustradaAmarilla1.png" alt="Logo">
             <div>
                 <h1>Iniciar sesión</h1>
                 <p>Sistema de registro de reuniones o citas</p>
