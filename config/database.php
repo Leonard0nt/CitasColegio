@@ -4,10 +4,10 @@
 // Idealmente esta carpeta config debe quedar FUERA de public_html.
 // Ejemplo: /home/usuario_cpanel/config/database.php
 
-$host = getenv('DB_HOST') ?: 'localhost';
-$dbname = getenv('DB_NAME') ?: 'csfchill_CitasCsf';
-$username = getenv('DB_USER') ?: 'csfchill_CitasUser';
-$password = getenv('DB_PASS') ?: 'Csanfernando.2026';
+$host = getenv('DB_HOST') ?: '';
+$dbname = getenv('DB_NAME') ?: '';
+$username = getenv('DB_USER') ?: '';
+$password = getenv('DB_PASS') ?: '';
 try {
     $pdo = new PDO(
         "mysql:host={$host};dbname={$dbname};charset=utf8mb4",
