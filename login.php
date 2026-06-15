@@ -38,7 +38,7 @@ if (is_logged_in()) {
 
         <form id="loginForm" class="form">
             <label>
-                Rut
+                Rut o Correo electrónico
                 <input type="text" name="email" placeholder="" required>
             </label>
 
