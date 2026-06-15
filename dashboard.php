@@ -38,7 +38,6 @@ require_roles(['admin', 'profesor']);
     <main class="container page">
         <section class="panel hero-panel">
             <h2>Bienvenido, <?= e($_SESSION['user_name']) ?></h2>
-            <p>Tu sesión está activa correctamente.</p>
 
             <div class="stats-grid">
                 <div class="stat-card">
