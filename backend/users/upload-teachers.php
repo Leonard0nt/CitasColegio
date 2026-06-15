@@ -406,27 +406,38 @@ try {
             }
         }
 
-        if ($userId > 0) {
-            $incomingUser = [
-                'name' => $name,
-                'email' => $email,
-                'role' => 'profesor',
-                'active' => '1',
-                'teacher_cost_center' => $costCenter,
-                'teacher_rut' => $rut,
-                'teacher_phone' => $phone,
-            ];
+if ($userId > 0) {
 
-            if ($existingUser === null || row_values_changed($existingUser, $incomingUser)) {
-                $updated++;
-            }
+    // Si el usuario ya es admin, no modificarlo
+    if (($existingUser['role'] ?? '') === 'admin') {
+        $skipped++;
+        $errors[] =
+            "Fila {$rowNumber}: {$name} ya existe como administrador, se omitió.";
 
-            $updateUser->execute([
-                ':id' => $userId,
-                ':name' => $name,
-                ':email' => $email,
-            ]);
-        } else {
+        continue;
+    }
+
+    $incomingUser = [
+        'name' => $name,
+        'email' => $email,
+        'role' => 'profesor',
+        'active' => '1',
+        'teacher_cost_center' => $costCenter,
+        'teacher_rut' => $rut,
+        'teacher_phone' => $phone,
+    ];
+
+    if ($existingUser === null || row_values_changed($existingUser, $incomingUser)) {
+        $updated++;
+    }
+
+    $updateUser->execute([
+        ':id' => $userId,
+        ':name' => $name,
+        ':email' => $email,
+    ]);
+
+} else {
             $insertUser->execute([
                 ':name' => $name,
                 ':email' => $email,
