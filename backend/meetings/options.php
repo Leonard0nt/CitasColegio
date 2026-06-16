@@ -2,6 +2,12 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
+if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Acceso denegado.']);
+    exit;
+}
+
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'profesor'], true)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Acceso denegado.']);
@@ -33,7 +39,7 @@ try {
         FROM students u
         INNER JOIN student_guardians sg ON sg.student_id = u.id
         WHERE u.active = 1
-        ORDER BY u.course ASC, u.name ASC
+        ORDER BY u.id ASC
     ");
 
     echo json_encode([

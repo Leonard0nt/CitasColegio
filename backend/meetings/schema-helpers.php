@@ -1,5 +1,10 @@
 <?php
 
+if (!defined('CITAS_CSF_ENTRY')) {
+    http_response_code(403);
+    exit;
+}
+
 function ensure_meetings_student_foreign_key(PDO $pdo): void
 {
     $stmt = $pdo->prepare(<<<SQL

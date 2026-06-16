@@ -1,5 +1,10 @@
 <?php
 
+if (!defined('CITAS_CSF_ENTRY')) {
+    http_response_code(403);
+    exit;
+}
+
 function ensure_teacher_profiles_table(PDO $pdo): void
 {
     $pdo->exec("CREATE TABLE IF NOT EXISTS teacher_profiles (

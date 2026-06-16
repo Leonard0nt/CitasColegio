@@ -1,5 +1,10 @@
 <?php
 
+if (!defined('CITAS_CSF_ENTRY')) {
+    http_response_code(403);
+    exit;
+}
+
 function configure_bulk_import_runtime(): void
 {
     if (function_exists('set_time_limit')) {

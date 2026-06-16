@@ -1,5 +1,10 @@
 <?php
 
+if (!defined('CITAS_CSF_ENTRY')) {
+    http_response_code(403);
+    exit;
+}
+
 function ensure_student_profiles_table(PDO $pdo): void
 {
     ensure_students_table($pdo);

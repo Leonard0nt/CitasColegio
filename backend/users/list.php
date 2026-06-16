@@ -3,6 +3,12 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
+if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Acceso denegado.']);
+    exit;
+}
+
 if (!isset($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Acceso denegado.']);
@@ -64,7 +70,7 @@ if ($role === 'alumno') {
                 GROUP BY student_id
             ) latest_sg ON latest_sg.id = sg.id
         ) sg ON sg.student_id = s.id
-        ORDER BY s.id DESC
+        ORDER BY s.id ASC
     ");
 
     $users = $stmt->fetchAll();
@@ -111,7 +117,7 @@ if ($role === 'alumno') {
         FROM users u
         LEFT JOIN teacher_profiles tp ON tp.user_id = u.id
         $whereSql
-        ORDER BY u.id DESC
+        ORDER BY u.id ASC
     ");
 
     $stmt->execute($params);

@@ -54,6 +54,7 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                         <tr>
                             <th>Profesor</th>
                             <th>Alumno</th>
+                            <th>Curso</th>
                             <th>Apoderado</th>
                             <th>Fecha</th>
                             <th>Hora</th>
@@ -61,7 +62,7 @@ $isAdmin = ($_SESSION['user_role'] ?? '') === 'admin';
                         </tr>
                     </thead>
                     <tbody id="meetingsTableBody">
-                        <tr><td colspan="6">Cargando reuniones...</td></tr>
+                        <tr><td colspan="7">Cargando reuniones...</td></tr>
                     </tbody>
                 </table>
             </div>

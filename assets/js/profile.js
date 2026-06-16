@@ -16,6 +16,7 @@ profileForm?.addEventListener('submit', async (event) => {
         const response = await fetch('backend/users/profile-update.php', {
             method: 'POST',
             body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
 
         const result = await response.json();

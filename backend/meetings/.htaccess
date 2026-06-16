@@ -1,0 +1,11 @@
+<IfModule mod_authz_core.c>
+    <FilesMatch "schema-helpers\.php$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    <FilesMatch "schema-helpers\.php$">
+        Deny from all
+    </FilesMatch>
+</IfModule>

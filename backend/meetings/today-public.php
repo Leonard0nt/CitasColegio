@@ -6,13 +6,16 @@ try {
     $stmt = $pdo->prepare("
         SELECT
             m.id,
-            COALESCE(t.name, 'Profesor eliminado') AS teacher_name,
-            COALESCE(s.name, 'Alumno eliminado') AS student_name,
+            t.name AS teacher_name,
+            t.email AS teacher_email,
+            tp.phone AS teacher_phone,
+            s.name AS student_name,
+            s.course AS student_course,
             m.guardian_name,
-            m.meeting_date,
             m.meeting_time
         FROM meetings m
         LEFT JOIN users t ON t.id = m.teacher_id
+        LEFT JOIN teacher_profiles tp ON tp.user_id = t.id
         LEFT JOIN students s ON s.id = m.student_id
         WHERE m.meeting_date = CURDATE()
         ORDER BY m.meeting_time ASC

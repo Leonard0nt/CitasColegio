@@ -78,6 +78,10 @@ async function request(url, formData = null) {
     const options = {
         method: formData ? 'POST' : 'GET',
         credentials: 'same-origin'
+        ,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
     };
 
     if (formData) options.body = formData;

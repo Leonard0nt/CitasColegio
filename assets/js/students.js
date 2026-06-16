@@ -85,6 +85,10 @@ async function request(url, formData = null) {
     const options = {
         method: formData ? 'POST' : 'GET',
         credentials: 'same-origin'
+        ,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
     };
 
     if (formData) options.body = formData;
@@ -128,12 +132,31 @@ function normalizeCourse(course) {
     return String(course ?? '').trim();
 }
 
+function getCourseOrder(course) {
+    const normalized = course.toLowerCase().trim();
+
+    // Educación parvularia
+    if (normalized.includes('pre-kinder') || normalized.includes('prekinder')) return 1;
+    if (normalized.includes('kinder')) return 2;
+    if (normalized.includes('transición') || normalized.includes('transicion')) return 3;
+
+    // Básica (ej: 1 básico, 2 basico, 8 básico)
+    let basicMatch = normalized.match(/^(\d+)\s*(°|º)?\s*(basico|básico)/);
+    if (basicMatch) return 10 + parseInt(basicMatch[1]);
+
+    // Media (ej: 1 medio, 2 medio)
+    let mediaMatch = normalized.match(/^(\d+)\s*(°|º)?\s*medio/);
+    if (mediaMatch) return 30 + parseInt(mediaMatch[1]);
+
+    // Todo lo no reconocido al final
+    return 999;
+}
+
 function populateCourseFilter(students) {
     const selectedCourse = currentCourseFilter;
     const courses = [...new Set(students
         .map(student => normalizeCourse(student.student_course))
-        .filter(Boolean))]
-        .sort((first, second) => first.localeCompare(second, 'es', { numeric: true, sensitivity: 'base' }));
+        .filter(Boolean))];
 
     courseFilter.innerHTML = '<option value="">Todos los cursos</option>';
 

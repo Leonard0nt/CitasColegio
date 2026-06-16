@@ -1,0 +1,14 @@
+# Denegar listado y proteger helpers dentro de backend
+Options -Indexes
+
+<IfModule mod_authz_core.c>
+    <FilesMatch ".*(helpers|schema-helpers|encoding-helpers)\.php$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    <FilesMatch ".*(helpers|schema-helpers|encoding-helpers)\.php$">
+        Deny from all
+    </FilesMatch>
+</IfModule>

@@ -2,6 +2,12 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
+if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Acceso denegado.']);
+    exit;
+}
+
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'profesor'], true)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Acceso denegado.']);
@@ -23,6 +29,7 @@ try {
             tp.phone AS teacher_phone,
             m.student_id,
             COALESCE(s.name, 'Alumno eliminado') AS student_name,
+            s.course AS student_course, --
             m.guardian_type,
             m.guardian_name,
             m.guardian_email,

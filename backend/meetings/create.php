@@ -2,6 +2,12 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
+if (($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') !== 'XMLHttpRequest') {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Acceso denegado.']);
+    exit;
+}
+
 if (!isset($_SESSION['user_id']) || !in_array($_SESSION['user_role'] ?? '', ['admin', 'profesor'], true)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Acceso denegado.']);
@@ -25,6 +31,30 @@ $notes = trim($_POST['notes'] ?? '');
 
 if ($teacherId <= 0 || $studentId <= 0 || $studentCourse === '' || $meetingDate === '' || $meetingTime === '') {
     echo json_encode(['success' => false, 'message' => 'Profesor, curso, alumno, fecha y hora son obligatorios.']);
+    exit;
+}
+
+// Validar que fecha/hora no sea anterior a la actual
+$meetingDateTime = DateTime::createFromFormat(
+    'Y-m-d H:i',
+    $meetingDate . ' ' . $meetingTime
+);
+
+$currentDateTime = new DateTime();
+
+if (!$meetingDateTime) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'Fecha u hora inválida.'
+    ]);
+    exit;
+}
+
+if ($meetingDateTime < $currentDateTime) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'No se puede agendar una reunión en una fecha u hora anterior a la actual.'
+    ]);
     exit;
 }
 

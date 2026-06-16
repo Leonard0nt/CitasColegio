@@ -65,11 +65,65 @@ function normalizeCourse(course) {
     return String(course ?? '').trim();
 }
 
+function getCourseOrder(course) {
+    const normalized = course.toLowerCase().trim();
+
+    // Pre-kinder
+    if (normalized.includes('pre-kinder') || normalized.includes('prekinder')) {
+        return 1;
+    }
+
+    // Kinder
+    if (normalized.includes('kinder')) {
+        return 2;
+    }
+
+    // Nivel transición
+    if (normalized.includes('transición') || normalized.includes('transicion')) {
+        // NT1 antes que NT2
+        if (normalized.includes('1')) return 3;
+        if (normalized.includes('2')) return 4;
+        return 3;
+    }
+
+    // Básica
+    let basicMatch = normalized.match(
+        /^(\d+|primero|segundo|tercero|cuarto|quinto|sexto|septimo|séptimo|octavo).*(basico|básico)/
+    );
+
+    if (basicMatch) {
+        const map = {
+            primero: 1,
+            segundo: 2,
+            tercero: 3,
+            cuarto: 4,
+            quinto: 5,
+            sexto: 6,
+            septimo: 7,
+            séptimo: 7,
+            octavo: 8
+        };
+
+        const grade = parseInt(basicMatch[1]) || map[basicMatch[1]] || 0;
+        return 10 + grade;
+    }
+
+    // Media
+    let mediaMatch = normalized.match(/^(\d+).*(medio)/);
+
+    if (mediaMatch) {
+        return 30 + parseInt(mediaMatch[1]);
+    }
+
+    return 999;
+}
+
 function getAvailableCourses() {
-    return [...new Set(options.students
-        .map(student => normalizeCourse(student.student_course))
-        .filter(Boolean))]
-        .sort((first, second) => first.localeCompare(second, 'es', { numeric: true, sensitivity: 'base' }));
+    return [...new Set(
+        options.students
+            .map(student => normalizeCourse(student.student_course))
+            .filter(Boolean)
+    )];
 }
 
 function populateCourseSelect() {
@@ -120,7 +174,9 @@ function populateStudentSelect() {
 }
 
 async function loadOptions() {
-    const res = await fetch('backend/meetings/options.php');
+    const res = await fetch('backend/meetings/options.php', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
     const data = await res.json();
 
     if (!data.success) {
@@ -188,7 +244,12 @@ async function loadMeetings(showLoading = true) {
     }
 
     try {
-        const res = await fetch('backend/meetings/list.php', { cache: 'no-store' });
+        const res = await fetch('backend/meetings/list.php', {
+            cache: 'no-store',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
         const data = await res.json();
 
         if (!data.success) {
@@ -217,6 +278,9 @@ async function loadMeetings(showLoading = true) {
                 </button>
             </td>
             <td>${escapeHtml(m.student_name)}</td>
+            <td>
+                ${escapeHtml(m.student_course || '-')}
+            </td>
             <td>
                 <div class="guardian-summary">
                     <strong>${escapeHtml(m.guardian_name)}</strong>
@@ -249,6 +313,7 @@ async function deleteMeeting(id) {
         const res = await fetch('backend/meetings/delete.php', {
             method: 'POST',
             body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         });
         const data = await res.json();
 
@@ -317,6 +382,7 @@ form?.addEventListener('submit', async (e) => {
     const res = await fetch('backend/meetings/create.php', {
         method: 'POST',
         body: formData,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
     });
 
     const data = await res.json();

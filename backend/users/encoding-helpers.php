@@ -1,5 +1,10 @@
 <?php
 
+if (!defined('CITAS_CSF_ENTRY')) {
+    http_response_code(403);
+    exit;
+}
+
 function normalize_csv_cell_value(string $value): string
 {
     $value = preg_replace('/^\xEF\xBB\xBF/', '', $value);
